@@ -26,4 +26,5 @@ object EnrolmentIdentifiers {
   val individualId = "MTDITID"
   val agentReference = "AgentReferenceNumber"
   val nino = "NINO"
+  val fakeIdentifier = "fake"
 }
