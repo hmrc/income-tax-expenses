@@ -35,6 +35,7 @@ case class DesErrorBodyModel(code: String, reason: String) extends DesErrorBody
 object DesErrorBodyModel {
   implicit val formats: OFormat[DesErrorBodyModel] = Json.format[DesErrorBodyModel]
   val parsingError: DesErrorBodyModel = DesErrorBodyModel("PARSING_ERROR", "Error parsing response from DES")
+  val invalidView: DesErrorBodyModel = DesErrorBodyModel("INVALID_VIEW", "Submission has not passed validation. Invalid query parameter view.")
 }
 
 /** Multiple DES Errors **/

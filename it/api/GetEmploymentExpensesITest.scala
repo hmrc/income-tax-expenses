@@ -18,6 +18,7 @@ package api
 
 import com.github.tomakehurst.wiremock.http.HttpHeader
 import helpers.WiremockSpec
+import models.DesErrorBodyModel.invalidView
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.play.PlaySpec
@@ -72,6 +73,20 @@ class GetEmploymentExpensesITest extends PlaySpec with WiremockSpec with ScalaFu
           result =>
             result.status mustBe OK
             Json.parse(result.body) mustBe Json.parse(GetEmploymentExpensesDesResponseBody)
+        }
+      }
+
+      "return 400 if the view is invalid" in new Setup {
+
+        authorised()
+
+        whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
+          .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> "INVALID"): _*)
+          .withHttpHeaders(mtditidHeader)
+          .get) {
+          result =>
+            result.status mustBe BAD_REQUEST
+            Json.parse(result.body) mustBe Json.toJson(invalidView)
         }
       }
 
