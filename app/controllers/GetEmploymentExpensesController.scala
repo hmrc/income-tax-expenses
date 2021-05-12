@@ -21,20 +21,28 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.GetEmploymentExpensesService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import models.DesErrorBodyModel.invalidView
+import play.api.Logging
+
+import scala.concurrent.{ExecutionContext, Future}
+import utils.ViewParameterValidation.isValid
 
 class GetEmploymentExpensesController @Inject()(
                                              service: GetEmploymentExpensesService,
                                              auth: AuthorisedAction,
                                              cc: ControllerComponents
-                                           )(implicit ec: ExecutionContext) extends BackendController(cc) {
+                                           )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def getEmploymentExpenses(nino: String, taxYear: Int, view: String): Action[AnyContent] = auth.async { implicit user =>
-    service.getEmploymentExpenses(nino, taxYear, view).map{
-      case Right(model) => Ok(Json.toJson(model))
-      case Left(errorModel) => Status(errorModel.status)(errorModel.toJson)
+    if(isValid(view)){
+      service.getEmploymentExpenses(nino, taxYear, view).map{
+        case Right(model) => Ok(Json.toJson(model))
+        case Left(errorModel) => Status(errorModel.status)(errorModel.toJson)
+      }
+    } else {
+      logger.error(s"[GetEmploymentExpensesController][getEmploymentExpenses] Supplied view is invalid. View: $view")
+      Future(BadRequest(Json.toJson(invalidView)))
     }
   }
 }
