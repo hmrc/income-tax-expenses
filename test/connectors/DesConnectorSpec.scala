@@ -18,7 +18,7 @@ package connectors
 
 import config.AppConfig
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.Authorization
+import uk.gov.hmrc.http.logging.Authorization
 import utils.TestUtils
 
 class DesConnectorSpec extends TestUtils{
