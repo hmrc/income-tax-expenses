@@ -30,7 +30,7 @@ import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 
 import scala.concurrent.ExecutionContext
 
-trait WiremockSpec extends BeforeAndAfterEach with BeforeAndAfterAll with GuiceOneServerPerSuite
+trait WiremockSpec extends PlaySpec with BeforeAndAfterEach with BeforeAndAfterAll with GuiceOneServerPerSuite
   with FutureAwaits with DefaultAwaitTimeout with WiremockStubHelpers with AuthStub {
   self: PlaySpec =>
 
