@@ -21,12 +21,11 @@ import helpers.WiremockSpec
 import models.DesErrorBodyModel.invalidView
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
-import org.scalatestplus.play.PlaySpec
 import play.api.http.Status._
 import play.api.libs.json.Json
 import utils.DESTaxYearHelper.desTaxYearConverter
 
-class GetEmploymentExpensesITest extends PlaySpec with WiremockSpec with ScalaFutures {
+class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
 
   trait Setup {
     implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds))
