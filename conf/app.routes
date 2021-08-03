@@ -1,3 +1,7 @@
 # microservice specific routes
 
-GET    /income-tax/nino/:nino/sources     controllers.GetEmploymentExpensesController.getEmploymentExpenses(nino: String, taxYear: Int, view: String)
+GET    /income-tax/nino/:nino/sources               controllers.GetEmploymentExpensesController.getEmploymentExpenses(nino: String, taxYear: Int, view: String)
+
+PUT    /income-tax/nino/:nino/sources               controllers.CreateOrAmendEmploymentExpensesController.createOrAmendEmploymentExpenses(nino: String, taxYear: Int)
+
+DELETE /income-tax/nino/:nino/sources/:toRemove     controllers.DeleteOrIgnoreEmploymentExpensesController.deleteOrIgnoreEmploymentExpenses(nino: String, toRemove: String, taxYear: Int)

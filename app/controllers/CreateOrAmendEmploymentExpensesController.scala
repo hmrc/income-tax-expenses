@@ -18,7 +18,7 @@ package controllers
 
 import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.CreateOrAmendEmploymentExpenseResponse
 import controllers.predicates.AuthorisedAction
-import models.EmploymentExpensesRequestModel
+import models.CreateExpensesRequestModel
 import play.api.Logging
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
@@ -35,8 +35,7 @@ class CreateOrAmendEmploymentExpensesController @Inject()(
                                            )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def createOrAmendEmploymentExpenses(nino: String, taxYear: Int): Action[AnyContent] = auth.async { implicit user =>
-
-    user.body.asJson.map(_.validate[EmploymentExpensesRequestModel]) match {
+    user.body.asJson.map(_.validate[CreateExpensesRequestModel]) match {
       case Some(JsSuccess(model, _)) => responseHandler(service.createOrAmendEmploymentExpenses(nino, taxYear, model))
       case _ => Future.successful(BadRequest)
     }

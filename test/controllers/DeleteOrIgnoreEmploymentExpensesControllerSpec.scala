@@ -17,23 +17,24 @@
 package controllers
 
 import connectors.httpParsers.DeleteOverrideEmploymentExpensesHttpParser.DeleteOverrideEmploymentExpensesResponse
-import models.{DesErrorBodyModel, DesErrorModel}
-import org.scalamock.handlers.CallHandler3
+import models.ToRemove.HmrcHeld
+import models.{DesErrorBodyModel, DesErrorModel, ToRemove}
+import org.scalamock.handlers.CallHandler5
 import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout}
-import services.DeleteOverrideEmploymentExpensesService
+import services.DeleteOrIgnoreEmploymentExpensesService
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestUtils
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class DeleteOverrideEmploymentExpensesControllerSpec extends TestUtils {
+class DeleteOrIgnoreEmploymentExpensesControllerSpec extends TestUtils {
 
-  val deleteOverrideEmploymentExpensesService: DeleteOverrideEmploymentExpensesService = mock[DeleteOverrideEmploymentExpensesService]
+  val deleteOverrideEmploymentExpensesService: DeleteOrIgnoreEmploymentExpensesService = mock[DeleteOrIgnoreEmploymentExpensesService]
 
-  val deleteOverrideEmploymentExpensesController = new DeleteOverrideEmploymentExpensesController(
+  val deleteOverrideEmploymentExpensesController = new DeleteOrIgnoreEmploymentExpensesController(
     deleteOverrideEmploymentExpensesService,
     authorisedAction,
     mockControllerComponents)
@@ -44,45 +45,52 @@ class DeleteOverrideEmploymentExpensesControllerSpec extends TestUtils {
 
   "deleteOverrideEmploymentExpenses" when {
 
-
-    def mockDeleteOverrideEmploymentExpensesSuccess(): CallHandler3[String, Int, HeaderCarrier, Future[DeleteOverrideEmploymentExpensesResponse]] = {
+    def mockDeleteOverrideEmploymentExpensesSuccess(): CallHandler5[String, ToRemove, Int, HeaderCarrier, ExecutionContext, Future[DeleteOverrideEmploymentExpensesResponse]] = {
       val response: DeleteOverrideEmploymentExpensesResponse = Right(())
-      (deleteOverrideEmploymentExpensesService.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
-        .expects(*, *, *)
+      (deleteOverrideEmploymentExpensesService.deleteOrIgnoreEmploymentExpenses(_: String, _: ToRemove, _: Int)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(*, *, *, *, *)
         .returning(Future.successful(response))
     }
 
-    def mockDeleteOverrideEmploymentExpensesFailure(httpStatus: Int): CallHandler3[String, Int,
-      HeaderCarrier, Future[DeleteOverrideEmploymentExpensesResponse]] = {
+    def mockDeleteOverrideEmploymentExpensesFailure(httpStatus: Int): CallHandler5[String, ToRemove, Int, HeaderCarrier, ExecutionContext, Future[DeleteOverrideEmploymentExpensesResponse]] = {
       val error: DeleteOverrideEmploymentExpensesResponse = Left(DesErrorModel(httpStatus, DesErrorBodyModel("DES_CODE", "DES_REASON")))
-      (deleteOverrideEmploymentExpensesService.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
-        .expects(*, *, *)
+      (deleteOverrideEmploymentExpensesService.deleteOrIgnoreEmploymentExpenses(_: String, _: ToRemove, _: Int)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(*, *, *, *, *)
         .returning(Future.successful(error))
     }
 
     val mtditid: String = "1234567890"
     val fakeRequest = FakeRequest("DELETE", "/TBC").withHeaders("mtditid" -> mtditid)
-
+    val validToRemove = HmrcHeld.value
+    val invalidToRemove = "unsupported"
 
     "the request is from an individual" should {
 
       "return a NoContent 204 response when the delete is successful" in {
-
         val result = {
           mockAuth()
           mockDeleteOverrideEmploymentExpensesSuccess()
-          deleteOverrideEmploymentExpensesController.deleteOverrideEmploymentExpenses(nino, taxYear)(fakeRequest)
+          deleteOverrideEmploymentExpensesController.deleteOrIgnoreEmploymentExpenses(nino, validToRemove, taxYear)(fakeRequest)
         }
         status(result) mustBe NO_CONTENT
       }
 
+      s"return a BadRequest response when toRemove string is not supported" in {
+        val result = {
+          mockAuth()
+          deleteOverrideEmploymentExpensesController.deleteOrIgnoreEmploymentExpenses(nino, invalidToRemove, taxYear)(fakeRequest)
+        }
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj("code" -> "INVALID_TO_REMOVE_PARAMETER" , "reason" -> "toRemove parameter is not: ALL, HMRC-HELD or CUSTOMER")
+      }
+
       Seq(INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE, BAD_REQUEST, NOT_FOUND).foreach { httpErrorCode =>
         s"return a $httpErrorCode response when des returns a $httpErrorCode" in {
-
           val result = {
             mockAuth()
             mockDeleteOverrideEmploymentExpensesFailure(httpErrorCode)
-            deleteOverrideEmploymentExpensesController.deleteOverrideEmploymentExpenses(nino, taxYear)(fakeRequest)
+            deleteOverrideEmploymentExpensesController.deleteOrIgnoreEmploymentExpenses(nino, validToRemove, taxYear)(fakeRequest)
           }
 
           status(result) mustBe httpErrorCode
@@ -94,11 +102,10 @@ class DeleteOverrideEmploymentExpensesControllerSpec extends TestUtils {
     "the request from an agent" should {
 
       "return a NoContent 204 response when the delete is successful" in {
-
         val result = {
           mockAuthAsAgent()
           mockDeleteOverrideEmploymentExpensesSuccess()
-          deleteOverrideEmploymentExpensesController.deleteOverrideEmploymentExpenses(nino, taxYear)(fakeRequest)
+          deleteOverrideEmploymentExpensesController.deleteOrIgnoreEmploymentExpenses(nino, validToRemove, taxYear)(fakeRequest)
         }
 
         status(result) mustBe NO_CONTENT
@@ -106,11 +113,10 @@ class DeleteOverrideEmploymentExpensesControllerSpec extends TestUtils {
 
       Seq(INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE, BAD_REQUEST, NOT_FOUND).foreach { httpErrorCode =>
         s"return a $httpErrorCode response when des returns a $httpErrorCode" in {
-
           val result = {
             mockAuthAsAgent()
             mockDeleteOverrideEmploymentExpensesFailure(httpErrorCode)
-            deleteOverrideEmploymentExpensesController.deleteOverrideEmploymentExpenses(nino, taxYear)(fakeRequest)
+            deleteOverrideEmploymentExpensesController.deleteOrIgnoreEmploymentExpenses(nino, validToRemove, taxYear)(fakeRequest)
           }
 
           status(result) mustBe httpErrorCode
