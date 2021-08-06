@@ -17,8 +17,8 @@
 package controllers
 
 import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.CreateOrAmendEmploymentExpenseResponse
-import models.{DesErrorBodyModel, DesErrorModel, EmploymentExpensesRequestModel}
-import org.scalamock.handlers.CallHandler4
+import models.{CreateExpensesRequestModel, DesErrorBodyModel, DesErrorModel}
+import org.scalamock.handlers.CallHandler5
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NO_CONTENT}
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -27,7 +27,7 @@ import services.CreateOrAmendEmploymentExpensesService
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestUtils
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class CreateOrAmendEmploymentExpensesControllerSpec extends TestUtils {
 
@@ -43,24 +43,38 @@ class CreateOrAmendEmploymentExpensesControllerSpec extends TestUtils {
 
   val serverErrorModel: DesErrorBodyModel = DesErrorBodyModel("SERVER_ERROR", "Internal server error")
 
-  def mockCreateOrAmendEmploymentExpensesSuccess(): CallHandler4[String, Int, EmploymentExpensesRequestModel, HeaderCarrier, Future[CreateOrAmendEmploymentExpenseResponse]] = {
+  def mockCreateOrAmendEmploymentExpensesSuccess(): CallHandler5[String, Int, CreateExpensesRequestModel, HeaderCarrier, ExecutionContext, Future[CreateOrAmendEmploymentExpenseResponse]] = {
     val response: CreateOrAmendEmploymentExpenseResponse = Right(())
-    (mockService.createOrAmendEmploymentExpenses(_: String, _: Int, _: EmploymentExpensesRequestModel)(_: HeaderCarrier))
-      .expects(*, *, *, *)
+    (mockService.createOrAmendEmploymentExpenses(_: String, _: Int, _: CreateExpensesRequestModel)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(*, *, *, *, *)
       .returning(Future.successful(response))
   }
 
-  def mockCreateOrAmendEmploymentExpensesError(): CallHandler4[String, Int, EmploymentExpensesRequestModel, HeaderCarrier, Future[CreateOrAmendEmploymentExpenseResponse]] = {
+  def mockCreateOrAmendEmploymentExpensesError(): CallHandler5[String, Int, CreateExpensesRequestModel, HeaderCarrier, ExecutionContext, Future[CreateOrAmendEmploymentExpenseResponse]] = {
     val response: CreateOrAmendEmploymentExpenseResponse = Left(DesErrorModel(INTERNAL_SERVER_ERROR, serverErrorModel))
-    (mockService.createOrAmendEmploymentExpenses(_: String, _: Int, _: EmploymentExpensesRequestModel)(_: HeaderCarrier))
-      .expects(*, *, *, *)
+    (mockService.createOrAmendEmploymentExpenses(_: String, _: Int, _: CreateExpensesRequestModel)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(*, *, *, *, *)
       .returning(Future.successful(response))
   }
 
   ".createOrAmendEmploymentExpenses" should {
-    val ignoreExpensesRequestBody = Json.obj("ignoreExpenses" -> true)
-    val expensesRequestBody =
+    val requestBodyWithoutIgnoreExpenses =
       Json.obj(
+        "expenses" -> Json.obj(
+          "businessTravelCosts" -> 0,
+          "jobExpenses" -> 0,
+          "flatRateJobExpenses" -> 0,
+          "professionalSubscriptions" -> 0,
+          "hotelAndMealExpenses" -> 0,
+          "otherAndCapitalAllowances" -> 0,
+          "vehicleExpenses" -> 0,
+          "mileageAllowanceRelief" -> 0,
+        )
+      )
+
+    val requestBodyWithIgnoreExpenses =
+      Json.obj(
+        "ignoreExpenses" -> true,
         "expenses" -> Json.obj(
           "businessTravelCosts" -> 0,
           "jobExpenses" -> 0,
@@ -75,8 +89,8 @@ class CreateOrAmendEmploymentExpensesControllerSpec extends TestUtils {
 
     "return NO_CONTENT" when {
 
-      "request body is valid and has the structure of IgnoreExpenses" in {
-        val request = fakePutRequest.withJsonBody(ignoreExpensesRequestBody)
+      "request body is valid and has ignoreExpenses field" in {
+        val request = fakePutRequest.withJsonBody(requestBodyWithIgnoreExpenses)
 
         val result = {
           mockAuth()
@@ -87,8 +101,8 @@ class CreateOrAmendEmploymentExpensesControllerSpec extends TestUtils {
         status(result) mustBe NO_CONTENT
       }
 
-      "request body is valid and has the structure of Expenses" in {
-        val request = fakePutRequest.withJsonBody(expensesRequestBody)
+      "request body is valid does not have ignoreExpenses field" in {
+        val request = fakePutRequest.withJsonBody(requestBodyWithoutIgnoreExpenses)
 
         val result = {
           mockAuth()
@@ -113,7 +127,7 @@ class CreateOrAmendEmploymentExpensesControllerSpec extends TestUtils {
     }
 
     "return an INTERNAL_SERVER_ERROR response when DES returns an INTERNAL_SERVER_ERROR" in {
-      val request = fakePutRequest.withJsonBody(expensesRequestBody)
+      val request = fakePutRequest.withJsonBody(requestBodyWithIgnoreExpenses)
 
       val result = {
         mockAuth()

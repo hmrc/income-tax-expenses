@@ -18,17 +18,28 @@ package services
 
 import connectors.CreateOrAmendEmploymentExpensesConnector
 import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.CreateOrAmendEmploymentExpenseResponse
-import models.EmploymentExpensesRequestModel
+import models._
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class CreateOrAmendEmploymentExpensesService @Inject()(connector: CreateOrAmendEmploymentExpensesConnector) {
 
-  def createOrAmendEmploymentExpenses(nino: String, taxYear: Int, expenses: EmploymentExpensesRequestModel)
-                           (implicit hc: HeaderCarrier): Future[CreateOrAmendEmploymentExpenseResponse] = {
-    connector.createOrAmendEmploymentExpenses(nino, taxYear, expenses)
+  def createOrAmendEmploymentExpenses(nino: String, taxYear: Int, expenses: CreateExpensesRequestModel)
+                           (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CreateOrAmendEmploymentExpenseResponse] = {
+
+    val ignoreExpensesOpt = expenses.ignoreExpenses.map(IgnoreExpenses(_))
+
+    ignoreExpensesOpt match {
+      case Some(ignoreExpensesRequestModel) if ignoreExpensesRequestModel.ignoreExpenses =>
+        connector.createOrAmendEmploymentExpenses(nino, taxYear, ignoreExpensesRequestModel)
+          .flatMap {
+            case Right(_) => connector.createOrAmendEmploymentExpenses(nino, taxYear, Expenses(expenses.expenses))
+            case Left(error) => Future(Left(error))
+          }
+      case _ => connector.createOrAmendEmploymentExpenses(nino, taxYear, Expenses(expenses.expenses))
+    }
   }
 
 }

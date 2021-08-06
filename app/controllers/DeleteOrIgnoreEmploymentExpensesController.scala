@@ -17,24 +17,27 @@
 package controllers
 
 import controllers.predicates.AuthorisedAction
+import models.{DesErrorBodyModel, ToRemove}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import services.DeleteOverrideEmploymentExpensesService
+import services.DeleteOrIgnoreEmploymentExpensesService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-class DeleteOverrideEmploymentExpensesController @Inject()(service: DeleteOverrideEmploymentExpensesService,
+class DeleteOrIgnoreEmploymentExpensesController @Inject()(service: DeleteOrIgnoreEmploymentExpensesService,
                                                            authorisedAction: AuthorisedAction,
                                                            cc: ControllerComponents)
                                                           (implicit ec: ExecutionContext) extends BackendController(cc) {
 
-  def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int): Action[AnyContent] = authorisedAction.async { implicit user =>
-    service.deleteOverrideEmploymentExpenses(nino, taxYear).map {
-      case Right(_) => NoContent
-      case Left(errorModel) => Status(errorModel.status)(Json.toJson(errorModel.toJson))
-    }
+  def deleteOrIgnoreEmploymentExpenses(nino: String, toRemove: String, taxYear: Int): Action[AnyContent] = authorisedAction.async { implicit user =>
+    ToRemove(toRemove).map { validToRemove =>
+      service.deleteOrIgnoreEmploymentExpenses(nino, validToRemove, taxYear).map {
+        case Right(_) => NoContent
+        case Left(errorModel) => Status(errorModel.status)(Json.toJson(errorModel.toJson))
+      }
+    }.getOrElse(Future(BadRequest(Json.toJson(DesErrorBodyModel("INVALID_TO_REMOVE_PARAMETER", "toRemove parameter is not: ALL, HMRC-HELD or CUSTOMER")))))
   }
 
 }
