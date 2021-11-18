@@ -18,7 +18,7 @@ package api
 
 import helpers.WiremockSpec
 import models.ToRemove.{All, Customer, HmrcHeld}
-import models.{DesErrorBodyModel, Expenses, ExpensesType, IgnoreExpenses}
+import models.{DesErrorBodyModel, IgnoreExpenses}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
 import play.api.http.Status._

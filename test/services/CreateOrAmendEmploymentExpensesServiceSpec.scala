@@ -20,7 +20,7 @@ import connectors.CreateOrAmendEmploymentExpensesConnector
 import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.CreateOrAmendEmploymentExpenseResponse
 import models._
 import org.scalamock.handlers.CallHandler4
-import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR}
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestUtils
 
