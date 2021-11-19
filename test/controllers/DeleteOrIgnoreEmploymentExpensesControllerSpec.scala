@@ -45,6 +45,7 @@ class DeleteOrIgnoreEmploymentExpensesControllerSpec extends TestUtils {
 
   "deleteOverrideEmploymentExpenses" when {
 
+    //noinspection ScalaStyle
     def mockDeleteOverrideEmploymentExpensesSuccess(): CallHandler5[String, ToRemove, Int, HeaderCarrier, ExecutionContext, Future[DeleteOverrideEmploymentExpensesResponse]] = {
       val response: DeleteOverrideEmploymentExpensesResponse = Right(())
       (deleteOverrideEmploymentExpensesService.deleteOrIgnoreEmploymentExpenses(_: String, _: ToRemove, _: Int)(_: HeaderCarrier, _: ExecutionContext))
@@ -52,6 +53,7 @@ class DeleteOrIgnoreEmploymentExpensesControllerSpec extends TestUtils {
         .returning(Future.successful(response))
     }
 
+    //noinspection ScalaStyle
     def mockDeleteOverrideEmploymentExpensesFailure(httpStatus: Int): CallHandler5[String, ToRemove, Int, HeaderCarrier, ExecutionContext, Future[DeleteOverrideEmploymentExpensesResponse]] = {
       val error: DeleteOverrideEmploymentExpensesResponse = Left(DesErrorModel(httpStatus, DesErrorBodyModel("DES_CODE", "DES_REASON")))
       (deleteOverrideEmploymentExpensesService.deleteOrIgnoreEmploymentExpenses(_: String, _: ToRemove, _: Int)(_: HeaderCarrier, _: ExecutionContext))

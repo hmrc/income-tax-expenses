@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.HeaderNames._
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, SessionId}
 import utils.TestUtils
 
-class DesConnectorSpec extends TestUtils{
+class DesConnectorSpec extends TestUtils {
 
   class FakeConnector(override val appConfig: AppConfig) extends DesConnector {
     def headerCarrierTest(url: String)(hc: HeaderCarrier): HeaderCarrier = desHeaderCarrier(url)(hc)

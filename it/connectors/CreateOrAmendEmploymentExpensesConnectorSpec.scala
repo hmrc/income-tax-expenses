@@ -17,7 +17,7 @@
 package connectors
 
 import com.github.tomakehurst.wiremock.http.HttpHeader
-import config.AppConfig
+import config.{AppConfig, BackendAppConfig}
 import helpers.WiremockSpec
 import models._
 import play.api.Configuration
@@ -32,7 +32,7 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
   lazy val connector: CreateOrAmendEmploymentExpensesConnector = app.injector.instanceOf[CreateOrAmendEmploymentExpensesConnector]
 
   lazy val httpClient: HttpClient = app.injector.instanceOf[HttpClient]
-  def appConfig(desHost: String): AppConfig = new AppConfig(app.injector.instanceOf[Configuration], app.injector.instanceOf[ServicesConfig]) {
+  def appConfig(desHost: String): AppConfig = new BackendAppConfig(app.injector.instanceOf[Configuration], app.injector.instanceOf[ServicesConfig]) {
     override val desBaseUrl: String = s"http://$desHost:$wireMockPort"
   }
 

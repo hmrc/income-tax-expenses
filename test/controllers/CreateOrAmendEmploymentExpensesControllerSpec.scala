@@ -21,6 +21,7 @@ import models.{CreateExpensesRequestModel, DesErrorBodyModel, DesErrorModel}
 import org.scalamock.handlers.CallHandler5
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NO_CONTENT}
 import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout}
 import services.CreateOrAmendEmploymentExpensesService
@@ -32,24 +33,26 @@ import scala.concurrent.{ExecutionContext, Future}
 class CreateOrAmendEmploymentExpensesControllerSpec extends TestUtils {
 
 
-  val mockService = mock[CreateOrAmendEmploymentExpensesService]
+  val mockService: CreateOrAmendEmploymentExpensesService = mock[CreateOrAmendEmploymentExpensesService]
   val controller = new CreateOrAmendEmploymentExpensesController(mockService, authorisedAction, mockControllerComponents)
 
   val nino: String = "123456789"
   val mtditid: String = "1234567890"
   val taxYear: Int = 2022
 
-  val fakePutRequest = FakeRequest("PUT", "/some_path_tbc").withHeaders("mtditid" -> mtditid)
+  val fakePutRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("PUT", "/some_path_tbc").withHeaders("mtditid" -> mtditid)
 
   val serverErrorModel: DesErrorBodyModel = DesErrorBodyModel("SERVER_ERROR", "Internal server error")
-
+  
+  //noinspection ScalaStyle
   def mockCreateOrAmendEmploymentExpensesSuccess(): CallHandler5[String, Int, CreateExpensesRequestModel, HeaderCarrier, ExecutionContext, Future[CreateOrAmendEmploymentExpenseResponse]] = {
     val response: CreateOrAmendEmploymentExpenseResponse = Right(())
     (mockService.createOrAmendEmploymentExpenses(_: String, _: Int, _: CreateExpensesRequestModel)(_: HeaderCarrier, _: ExecutionContext))
       .expects(*, *, *, *, *)
       .returning(Future.successful(response))
   }
-
+  
+  //noinspection ScalaStyle
   def mockCreateOrAmendEmploymentExpensesError(): CallHandler5[String, Int, CreateExpensesRequestModel, HeaderCarrier, ExecutionContext, Future[CreateOrAmendEmploymentExpenseResponse]] = {
     val response: CreateOrAmendEmploymentExpenseResponse = Left(DesErrorModel(INTERNAL_SERVER_ERROR, serverErrorModel))
     (mockService.createOrAmendEmploymentExpenses(_: String, _: Int, _: CreateExpensesRequestModel)(_: HeaderCarrier, _: ExecutionContext))
