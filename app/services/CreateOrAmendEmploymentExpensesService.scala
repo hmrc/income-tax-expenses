@@ -16,29 +16,51 @@
 
 package services
 
-import connectors.CreateOrAmendEmploymentExpensesConnector
+import connectors.{CreateOrAmendEmploymentExpensesConnector, DeleteOverrideEmploymentExpensesConnector}
 import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.CreateOrAmendEmploymentExpenseResponse
+import connectors.httpParsers.DeleteOverrideEmploymentExpensesHttpParser.DeleteOverrideEmploymentExpensesResponse
 import models._
+import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreateOrAmendEmploymentExpensesService @Inject()(connector: CreateOrAmendEmploymentExpensesConnector) {
+
+class CreateOrAmendEmploymentExpensesService @Inject()(
+                                                        connector: CreateOrAmendEmploymentExpensesConnector,
+                                                        deleteConnector: DeleteOverrideEmploymentExpensesConnector
+                                                      ) {
 
   def createOrAmendEmploymentExpenses(nino: String, taxYear: Int, expenses: CreateExpensesRequestModel)
-                           (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CreateOrAmendEmploymentExpenseResponse] = {
+                                     (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CreateOrAmendEmploymentExpenseResponse] = {
 
-    val ignoreExpensesOpt = expenses.ignoreExpenses.map(IgnoreExpenses(_))
+    val ignoreExpensesOpt: Option[IgnoreExpenses] = expenses.ignoreExpenses.map(IgnoreExpenses(_))
+
+    def performCreateOrDelete(nino: String, taxYear: Int, expenses: CreateExpensesRequestModel): Future[CreateOrAmendEmploymentExpenseResponse] = {
+      if (expenses.expenses.isEmpty) {
+        performDeleteWhenEmptyExpenses(nino, taxYear)
+      } else {
+        connector.createOrAmendEmploymentExpenses(nino, taxYear, Expenses(expenses.expenses))
+      }
+    }
+
+    def performDeleteWhenEmptyExpenses(nino: String, taxYear: Int): Future[DeleteOverrideEmploymentExpensesResponse] = {
+      deleteConnector.deleteOverrideEmploymentExpenses(nino, taxYear).flatMap {
+        case Left(error) if (error.status == NOT_FOUND) => Future(Right(Unit))
+        case Left(error) => Future(Left(error))
+        case Right(response) => Future(Right(response))
+      }
+    }
 
     ignoreExpensesOpt match {
       case Some(ignoreExpensesRequestModel) if ignoreExpensesRequestModel.ignoreExpenses =>
         connector.createOrAmendEmploymentExpenses(nino, taxYear, ignoreExpensesRequestModel)
           .flatMap {
-            case Right(_) => connector.createOrAmendEmploymentExpenses(nino, taxYear, Expenses(expenses.expenses))
+            case Right(_) => performCreateOrDelete(nino, taxYear, expenses)
             case Left(error) => Future(Left(error))
           }
-      case _ => connector.createOrAmendEmploymentExpenses(nino, taxYear, Expenses(expenses.expenses))
+      case _ => performCreateOrDelete(nino, taxYear, expenses)
     }
   }
 
