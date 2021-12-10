@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class ExpensesType(
                          businessTravelCosts: Option[BigDecimal],
@@ -27,10 +27,22 @@ case class ExpensesType(
                          otherAndCapitalAllowances: Option[BigDecimal],
                          vehicleExpenses: Option[BigDecimal],
                          mileageAllowanceRelief: Option[BigDecimal]
-                       )
+                       ) {
+
+  def isEmpty: Boolean = {
+    businessTravelCosts.isEmpty &&
+      jobExpenses.isEmpty &&
+      flatRateJobExpenses.isEmpty &&
+      professionalSubscriptions.isEmpty &&
+      hotelAndMealExpenses.isEmpty &&
+      otherAndCapitalAllowances.isEmpty &&
+      vehicleExpenses.isEmpty &&
+      mileageAllowanceRelief.isEmpty
+  }
+}
 
 object ExpensesType {
-  implicit val format = Json.format[ExpensesType]
+  implicit val format: OFormat[ExpensesType] = Json.format[ExpensesType]
 }
 
 case class GetEmploymentExpensesModel(
@@ -42,5 +54,5 @@ case class GetEmploymentExpensesModel(
                                      )
 
 object GetEmploymentExpensesModel {
-  implicit val format = Json.format[GetEmploymentExpensesModel]
+  implicit val format: OFormat[GetEmploymentExpensesModel] = Json.format[GetEmploymentExpensesModel]
 }
