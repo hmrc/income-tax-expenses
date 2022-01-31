@@ -36,6 +36,25 @@ object DesErrorBodyModel {
   implicit val formats: OFormat[DesErrorBodyModel] = Json.format[DesErrorBodyModel]
   val parsingError: DesErrorBodyModel = DesErrorBodyModel("PARSING_ERROR", "Error parsing response from DES")
   val invalidView: DesErrorBodyModel = DesErrorBodyModel("INVALID_VIEW", "Submission has not passed validation. Invalid query parameter view.")
+  val invalidTaxYear: DesErrorBodyModel = DesErrorBodyModel(
+    "INVALID_TAX_YEAR", "Submission has not passed validation. Invalid parameter taxYear.")
+  val invalidCorrelationId: DesErrorBodyModel = DesErrorBodyModel(
+    "INVALID_CORRELATIONID", "Submission has not passed validation. Invalid Header parameter CorrelationId.")
+  val invalidTaxableEntityId: DesErrorBodyModel = DesErrorBodyModel(
+    "INVALID_TAXABLE_ENTITY_ID", "Submission has not passed validation. Invalid parameter taxableEntityId.")
+  val invalidDateRange: DesErrorBodyModel = DesErrorBodyModel(
+    "INVALID_DATE_RANGE", "The remote endpoint has indicated that tax year requested exceeds CY-4.")
+  val noDataFound: DesErrorBodyModel = DesErrorBodyModel(
+    "NO_DATA_FOUND", "The remote endpoint has indicated that the requested resource could not be found.")
+  val serviceUnavailable: DesErrorBodyModel = DesErrorBodyModel(
+    "SERVICE_UNAVAILABLE", "Dependent systems are currently not responding.")
+  val invalidPayload: DesErrorBodyModel = DesErrorBodyModel(
+    "INVALID_PAYLOAD", "Submission has not passed validation. Invalid payload.")
+  val serverError: DesErrorBodyModel = DesErrorBodyModel(
+    "SERVER_ERROR", "DES is currently experiencing problems that require live service intervention.")
+  val ifServerError: DesErrorBodyModel = DesErrorBodyModel(
+    "SERVER_ERROR", "IF is currently experiencing problems that require live service intervention.")
+
 }
 
 /** Multiple DES Errors **/

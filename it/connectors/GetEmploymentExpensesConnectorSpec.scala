@@ -17,7 +17,7 @@
 package connectors
 
 import com.github.tomakehurst.wiremock.http.HttpHeader
-import config.{AppConfig, BackendAppConfig}
+import config.BackendAppConfig
 import connectors.GetEmploymentExpensesConnectorSpec.expectedResponseBody
 import helpers.WiremockSpec
 import models.{DesErrorBodyModel, DesErrorModel, GetEmploymentExpensesModel}
@@ -33,18 +33,20 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
   lazy val connector: GetEmploymentExpensesConnector = app.injector.instanceOf[GetEmploymentExpensesConnector]
 
   lazy val httpClient: HttpClient = app.injector.instanceOf[HttpClient]
-  def appConfig(desHost: String): AppConfig = new BackendAppConfig(app.injector.instanceOf[Configuration], app.injector.instanceOf[ServicesConfig]) {
-    override val desBaseUrl: String = s"http://$desHost:$wireMockPort"
-  }
-
   val nino: String = "123456789"
-  val taxYear: Int = 1999
+  val taxYear: Int = 2022
   val view: String = "latest"
+
+  def appConfig(integrationFrameworkHost: String): BackendAppConfig = {
+    new BackendAppConfig(app.injector.instanceOf[Configuration], app.injector.instanceOf[ServicesConfig]) {
+      override val integrationFrameworkBaseUrl: String = s"http://$integrationFrameworkHost:$wireMockPort"
+    }
+  }
 
   ".GetEmploymentExpensesConnector" should {
 
     "include internal headers" when {
-      val headersSentToDes = Seq(
+      val headersSentToIntegrationFramework = Seq(
         new HttpHeader(HeaderNames.authorisation, "Bearer secret"),
         new HttpHeader(HeaderNames.xSessionId, "sessionIdValue")
       )
@@ -52,26 +54,26 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
       val internalHost = "localhost"
       val externalHost = "127.0.0.1"
 
-      "the host for DES is 'Internal'" in {
+      "the host for IF is 'Internal'" in {
         implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
         val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(internalHost))
         val expectedResult = Json.parse(expectedResponseBody).as[GetEmploymentExpensesModel]
 
         stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view",
-          OK, expectedResponseBody, headersSentToDes)
+          OK, expectedResponseBody, headersSentToIntegrationFramework)
 
         val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc))
 
         result mustBe Right(expectedResult)
       }
 
-      "the host for DES is 'External'" in {
+      "the host for IF is 'External'" in {
         implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
         val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(externalHost))
         val expectedResult = Json.parse(expectedResponseBody).as[GetEmploymentExpensesModel]
 
         stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view",
-          OK, expectedResponseBody, headersSentToDes)
+          OK, expectedResponseBody, headersSentToIntegrationFramework)
 
         val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc))
 
@@ -82,12 +84,13 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
     "return a GetEmploymentExpensesModel" when {
       "only nino and taxYear are present" in {
         val expectedResult = Json.parse(expectedResponseBody).as[GetEmploymentExpensesModel]
+
         stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view", OK, expectedResponseBody)
 
         implicit val hc: HeaderCarrier = HeaderCarrier()
-        val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc)).right.get
+        val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc))
 
-        result mustBe expectedResult
+        result mustBe Right(expectedResult)
       }
 
       "nino, taxYear and sourceType are present" in {
@@ -174,14 +177,15 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
       )
       val expectedResult = DesErrorModel(SERVICE_UNAVAILABLE, DesErrorBodyModel("SERVICE_UNAVAILABLE", "Service is unavailable"))
 
-      stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view", SERVICE_UNAVAILABLE, responseBody.toString())
+      stubGetWithResponseBody(
+        s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view", SERVICE_UNAVAILABLE, responseBody.toString())
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc))
 
       result mustBe Left(expectedResult)
     }
 
-    "return an Internal Server Error when DES throws an unexpected result" in {
+    "return an Internal Server Error when IF throws an unexpected result" in {
       val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)
 
       stubGetWithoutResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view", NO_CONTENT)
@@ -191,12 +195,12 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
       result mustBe Left(expectedResult)
     }
 
-    "return an Internal Server Error when DES throws an unexpected result that is parsable" in {
+    "return an Internal Server Error when IF throws an unexpected result that is parsable" in {
       val responseBody = Json.obj(
         "code" -> "SERVICE_UNAVAILABLE",
         "reason" -> "Service is unavailable"
       )
-      val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR,  DesErrorBodyModel("SERVICE_UNAVAILABLE", "Service is unavailable"))
+      val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel("SERVICE_UNAVAILABLE", "Service is unavailable"))
 
       stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view", CONFLICT, responseBody.toString())
       implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -205,11 +209,11 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
       result mustBe Left(expectedResult)
     }
 
-    "return an Internal Server Error when DES throws an unexpected result that isn't parsable" in {
+    "return an Internal Server Error when IF throws an unexpected result that isn't parsable" in {
       val responseBody = Json.obj(
         "code" -> "SERVICE_UNAVAILABLE"
       )
-      val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR,  DesErrorBodyModel.parsingError)
+      val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)
 
       stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view", CONFLICT, responseBody.toString())
       implicit val hc: HeaderCarrier = HeaderCarrier()

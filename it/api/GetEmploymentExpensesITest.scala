@@ -32,13 +32,13 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
     val successNino: String = "AA123123A"
     val taxYear = 2021
     val agentClientCookie: Map[String, String] = Map("MTDITID" -> "555555555")
-    val mtditidHeader = ("mtditid", "555555555")
+    val mtditidHeader: (String, String) = ("mtditid", "555555555")
     val requestHeaders: Seq[HttpHeader] = Seq(new HttpHeader("mtditid", "555555555"))
     val view = "LATEST"
     auditStubs()
   }
 
-  val GetEmploymentExpensesDesResponseBody =
+  val getEmploymentExpensesIFResponseBody: String =
     """
       |{
       |	"submittedOn": "2020-12-12T12:12:12Z",
@@ -60,7 +60,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
         stubGetWithResponseBody(
           url = s"/income-tax/expenses/employments/$successNino/${desTaxYearConverter(taxYear)}\\?view=$view",
           status = OK,
-          response = GetEmploymentExpensesDesResponseBody
+          response = getEmploymentExpensesIFResponseBody
         )
 
         authorised()
@@ -71,7 +71,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
           .get) {
           result =>
             result.status mustBe OK
-            Json.parse(result.body) mustBe Json.parse(GetEmploymentExpensesDesResponseBody)
+            Json.parse(result.body) mustBe Json.parse(getEmploymentExpensesIFResponseBody)
         }
       }
 

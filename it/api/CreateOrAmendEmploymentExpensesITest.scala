@@ -22,6 +22,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
 import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.libs.ws.WSResponse
 import utils.DESTaxYearHelper.desTaxYearConverter
 
 class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
@@ -32,7 +33,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
   trait Setup {
     implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds))
     val agentClientCookie: Map[String, String] = Map("MTDITID" -> "555555555")
-    val mtditidHeader = ("mtditid", "555555555")
+    val mtditidHeader: (String, String) = ("mtditid", "555555555")
     val view = "LATEST"
     auditStubs()
   }
@@ -75,7 +76,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       val expenseDesModel = Json.toJson(Expenses(ExpensesType(Some(0), Some(0), Some(0), Some(0), Some(0), Some(0), Some(0), Some(0)))).toString()
 
       "return 204 when request contains ignoreExpense(true)" in new Setup {
-        val result = {
+        val result: WSResponse = {
           authorised()
           stubPutWithoutResponseBody(desCreateExpenseUrl, ignoreExpenseDesModel, NO_CONTENT)
           stubPutWithoutResponseBody(desCreateExpenseUrl, expenseDesModel, NO_CONTENT)
@@ -91,7 +92,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       }
 
       "return 204 when request does not contain ignoreExpense" in new Setup {
-        val result = {
+        val result: WSResponse = {
           authorised()
           stubPutWithoutResponseBody(desCreateExpenseUrl, expenseDesModel, NO_CONTENT)
 
@@ -106,7 +107,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       }
 
       "return 204 when request contains ignoreExpense(false)" in new Setup {
-        val result = {
+        val result: WSResponse = {
           authorised()
           stubPutWithoutResponseBody(desCreateExpenseUrl, expenseDesModel, NO_CONTENT)
 
@@ -121,7 +122,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       }
 
       "return 400 if the request body is invalid" in new Setup {
-        val result = {
+        val result: WSResponse = {
           authorised()
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
@@ -135,9 +136,9 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       }
 
       "return 503 if a downstream error occurs" in new Setup {
-        val errorResponseBody = Json.toJson(DesErrorBodyModel("SERVICE_UNAVAILABLE", "The service is temporarily unavailable")).toString()
+        val errorResponseBody: String = Json.toJson(DesErrorBodyModel("SERVICE_UNAVAILABLE", "The service is temporarily unavailable")).toString()
 
-        val result = {
+        val result: WSResponse = {
           authorised()
           stubPutWithResponseBody(desCreateExpenseUrl, expenseDesModel, errorResponseBody, SERVICE_UNAVAILABLE)
 
@@ -153,7 +154,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       }
 
       "return 401 if the user has no HMRC-MTD-IT enrolment" in new Setup {
-        val result = {
+        val result: WSResponse = {
           unauthorisedOtherEnrolment()
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
@@ -168,7 +169,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       }
 
       "return 401 if the request has no MTDITID header present" in new Setup {
-        val result = {
+        val result: WSResponse = {
           unauthorisedOtherEnrolment()
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
