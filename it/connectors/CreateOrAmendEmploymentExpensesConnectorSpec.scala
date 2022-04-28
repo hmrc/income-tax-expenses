@@ -32,16 +32,17 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
   lazy val connector: CreateOrAmendEmploymentExpensesConnector = app.injector.instanceOf[CreateOrAmendEmploymentExpensesConnector]
 
   lazy val httpClient: HttpClient = app.injector.instanceOf[HttpClient]
-  def appConfig(desHost: String): AppConfig = new BackendAppConfig(app.injector.instanceOf[Configuration], app.injector.instanceOf[ServicesConfig]) {
-    override val desBaseUrl: String = s"http://$desHost:$wireMockPort"
-  }
+
+  def appConfig(integrationFrameworkHost: String): AppConfig =
+    new BackendAppConfig(app.injector.instanceOf[Configuration], app.injector.instanceOf[ServicesConfig]) {
+      override val integrationFrameworkBaseUrl: String = s"http://$integrationFrameworkHost:$wireMockPort"
+    }
 
   val nino: String = "123456789"
   val taxYear: Int = 1999
   val view: String = "latest"
 
   ".CreateOrAmendEmploymentExpensesConnector" should {
-
     val ignoreExpenses = IgnoreExpenses(true)
     val expenses = Expenses(ExpensesType(Some(0), Some(0), Some(0), Some(0), Some(0), Some(0), Some(0), Some(0)))
 
@@ -51,7 +52,7 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
     val stubUrl = s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}"
 
     "include internal headers" when {
-      val headersSentToDes = Seq(
+      val headersSentToIF = Seq(
         new HttpHeader(HeaderNames.authorisation, "Bearer secret"),
         new HttpHeader(HeaderNames.xSessionId, "sessionIdValue")
       )
@@ -59,22 +60,22 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
       val internalHost = "localhost"
       val externalHost = "127.0.0.1"
 
-      "the host for DES is 'Internal'" in {
+      "the host for Integration Framework is 'Internal'" in {
         implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
         val connector = new CreateOrAmendEmploymentExpensesConnector(httpClient, appConfig(internalHost))
 
-        stubPutWithoutResponseBody(stubUrl, expensesRequestBody.toString(), NO_CONTENT, headersSentToDes)
+        stubPutWithoutResponseBody(stubUrl, expensesRequestBody.toString(), NO_CONTENT, headersSentToIF)
 
         val result = await(connector.createOrAmendEmploymentExpenses(nino, taxYear, expenses)(hc))
 
         result mustBe Right(())
       }
 
-      "the host for DES is 'External'" in {
+      "the host for Integration Framework is 'External'" in {
         implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
         val connector = new CreateOrAmendEmploymentExpensesConnector(httpClient, appConfig(externalHost))
 
-        stubPutWithoutResponseBody(stubUrl, expensesRequestBody.toString(), NO_CONTENT, headersSentToDes)
+        stubPutWithoutResponseBody(stubUrl, expensesRequestBody.toString(), NO_CONTENT, headersSentToIF)
 
         val result = await(connector.createOrAmendEmploymentExpenses(nino, taxYear, expenses)(hc))
 
@@ -100,13 +101,21 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
 
         result mustBe Right(())
       }
+
+      "response is NOT_FOUND" in {
+        stubPutWithoutResponseBody(stubUrl, ignoreExpensesRequestBody.toString(), NOT_FOUND)
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+        val result = await(connector.createOrAmendEmploymentExpenses(nino, taxYear, ignoreExpenses)(hc))
+
+        result mustBe Right(())
+      }
     }
 
     "return Left(error)" when {
-
       Seq(BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { httpErrorStatus =>
 
-        s"DES returns $httpErrorStatus response that has a parsable error body" in {
+        s"Integration Framework returns $httpErrorStatus response that has a parsable error body" in {
           val responseBody = Json.obj(
             "code" -> "SOME_DES_ERROR_CODE",
             "reason" -> "SOME_DES_ERROR_REASON"
@@ -120,8 +129,8 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
           result mustBe Left(expectedResult)
         }
 
-        s"DES returns $httpErrorStatus response that does not have a parsable error body" in {
-          val expectedResult = DesErrorModel(httpErrorStatus,  DesErrorBodyModel.parsingError)
+        s"Integration Framework returns $httpErrorStatus response that does not have a parsable error body" in {
+          val expectedResult = DesErrorModel(httpErrorStatus, DesErrorBodyModel.parsingError)
 
           stubPutWithResponseBody(stubUrl, expensesRequestBody.toString(), "UNEXPECTED RESPONSE BODY", httpErrorStatus)
           implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -129,15 +138,14 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
 
           result mustBe Left(expectedResult)
         }
-
       }
 
-      "DES returns an unexpected http response that is parsable" in {
+      "Integration Framework returns an unexpected http response that is parsable" in {
         val responseBody = Json.obj(
           "code" -> "BAD_GATEWAY",
           "reason" -> "bad gateway"
         )
-        val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR,  DesErrorBodyModel("BAD_GATEWAY", "bad gateway"))
+        val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel("BAD_GATEWAY", "bad gateway"))
 
         stubPutWithResponseBody(stubUrl, expensesRequestBody.toString(), responseBody.toString(), BAD_GATEWAY)
         implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -146,8 +154,8 @@ class CreateOrAmendEmploymentExpensesConnectorSpec extends WiremockSpec {
         result mustBe Left(expectedResult)
       }
 
-      "DES returns an unexpected http response that is not parsable" in {
-        val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR,  DesErrorBodyModel.parsingError)
+      "Integration Framework returns an unexpected http response that is not parsable" in {
+        val expectedResult = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)
 
         stubPutWithResponseBody(stubUrl, expensesRequestBody.toString(), "Bad Gateway", BAD_GATEWAY)
         implicit val hc: HeaderCarrier = HeaderCarrier()

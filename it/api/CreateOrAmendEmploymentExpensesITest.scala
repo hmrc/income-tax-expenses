@@ -31,7 +31,8 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
   private val taxYear = 2021
 
   trait Setup {
-    implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds))
+    private val spanUnitLength = 5
+    implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(spanUnitLength, Seconds))
     val agentClientCookie: Map[String, String] = Map("MTDITID" -> "555555555")
     val mtditidHeader: (String, String) = ("mtditid", "555555555")
     val view = "LATEST"
@@ -69,7 +70,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
   "create or amend employment expenses" when {
 
-    val desCreateExpenseUrl = s"/income-tax/expenses/employments/$successNino/${desTaxYearConverter(taxYear)}"
+    val integrationFrameworkCreateExpenseUrl = s"/income-tax/expenses/employments/$successNino/${desTaxYearConverter(taxYear)}"
 
     "the user is an individual" must {
       val ignoreExpenseDesModel = Json.toJson(IgnoreExpenses(true)).toString()
@@ -78,8 +79,8 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       "return 204 when request contains ignoreExpense(true)" in new Setup {
         val result: WSResponse = {
           authorised()
-          stubPutWithoutResponseBody(desCreateExpenseUrl, ignoreExpenseDesModel, NO_CONTENT)
-          stubPutWithoutResponseBody(desCreateExpenseUrl, expenseDesModel, NO_CONTENT)
+          stubPutWithoutResponseBody(integrationFrameworkCreateExpenseUrl, ignoreExpenseDesModel, NO_CONTENT)
+          stubPutWithoutResponseBody(integrationFrameworkCreateExpenseUrl, expenseDesModel, NO_CONTENT)
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
@@ -94,7 +95,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       "return 204 when request does not contain ignoreExpense" in new Setup {
         val result: WSResponse = {
           authorised()
-          stubPutWithoutResponseBody(desCreateExpenseUrl, expenseDesModel, NO_CONTENT)
+          stubPutWithoutResponseBody(integrationFrameworkCreateExpenseUrl, expenseDesModel, NO_CONTENT)
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
@@ -109,7 +110,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
       "return 204 when request contains ignoreExpense(false)" in new Setup {
         val result: WSResponse = {
           authorised()
-          stubPutWithoutResponseBody(desCreateExpenseUrl, expenseDesModel, NO_CONTENT)
+          stubPutWithoutResponseBody(integrationFrameworkCreateExpenseUrl, expenseDesModel, NO_CONTENT)
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
@@ -140,7 +141,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
         val result: WSResponse = {
           authorised()
-          stubPutWithResponseBody(desCreateExpenseUrl, expenseDesModel, errorResponseBody, SERVICE_UNAVAILABLE)
+          stubPutWithResponseBody(integrationFrameworkCreateExpenseUrl, expenseDesModel, errorResponseBody, SERVICE_UNAVAILABLE)
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")

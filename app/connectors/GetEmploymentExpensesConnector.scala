@@ -30,12 +30,12 @@ class GetEmploymentExpensesConnector @Inject()(val http: HttpClient,
   def getEmploymentExpenses(nino: String, taxYear: Int, view: String)(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
 
     val incomeSourcesUri: String =
-      appConfig.integrationFrameworkBaseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}" + s"?view=$view"
+      baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}" + s"?view=$view"
 
     def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
       http.GET[GetEmploymentExpensesResponse](incomeSourcesUri)
     }
 
-    integrationFrameworkCall(integrationFrameworkHeaderCarrier(incomeSourcesUri, apiNumber = "1668"))
+    integrationFrameworkCall(integrationFrameworkHeaderCarrier(incomeSourcesUri, GET_EXPENSES))
   }
 }

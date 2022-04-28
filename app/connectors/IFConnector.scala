@@ -28,6 +28,11 @@ trait IFConnector {
 
   val appConfig: AppConfig
 
+  val GET_EXPENSES = "1668"
+  val CREATE_UPDATE_EXPENSES = "1669"
+
+  lazy val baseUrl: String = appConfig.integrationFrameworkBaseUrl
+
   val headerCarrierConfig: Config = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 
   private[connectors] def integrationFrameworkHeaderCarrier(url : String, apiNumber: String)(implicit hc: HeaderCarrier): HeaderCarrier = {

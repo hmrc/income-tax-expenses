@@ -28,6 +28,8 @@ trait DesConnector {
 
   val appConfig: AppConfig
 
+  lazy val baseUrl: String = appConfig.desBaseUrl
+
   val headerCarrierConfig: Config = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 
   private[connectors] def desHeaderCarrier(url : String)(implicit hc: HeaderCarrier): HeaderCarrier = {
