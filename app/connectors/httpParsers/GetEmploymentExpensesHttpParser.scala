@@ -17,12 +17,13 @@
 package connectors.httpParsers
 
 import models.{DesErrorBodyModel, DesErrorModel, GetEmploymentExpensesModel}
+import play.api.Logging
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import utils.PagerDutyHelper.PagerDutyKeys._
 import utils.PagerDutyHelper.pagerDutyLog
 
-object GetEmploymentExpensesHttpParser extends DESParser {
+object GetEmploymentExpensesHttpParser extends DESParser with Logging {
   type GetEmploymentExpensesResponse = Either[DesErrorModel, GetEmploymentExpensesModel]
 
   override val parserName: String = "GetEmploymentExpensesHttpParser"
@@ -32,19 +33,22 @@ object GetEmploymentExpensesHttpParser extends DESParser {
     override def read(method: String, url: String, response: HttpResponse): GetEmploymentExpensesResponse = {
       response.status match {
         case OK => response.json.validate[GetEmploymentExpensesModel].fold[GetEmploymentExpensesResponse](
-          jsonErrors => {
+          _ => {
             pagerDutyLog(BAD_SUCCESS_JSON_FROM_DES,s"[GetEmploymentExpensesHttpParser][read] Invalid Json from DES.")
             Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
           },
           parsedModel => Right(parsedModel)
         )
+        case NOT_FOUND =>
+          logger.info(logMessage(response))
+          handleDESError(response)
         case INTERNAL_SERVER_ERROR =>
           pagerDutyLog(INTERNAL_SERVER_ERROR_FROM_DES, logMessage(response))
           handleDESError(response)
         case SERVICE_UNAVAILABLE =>
           pagerDutyLog(SERVICE_UNAVAILABLE_FROM_DES, logMessage(response))
           handleDESError(response)
-        case BAD_REQUEST | NOT_FOUND | UNPROCESSABLE_ENTITY =>
+        case BAD_REQUEST | UNPROCESSABLE_ENTITY =>
           pagerDutyLog(FOURXX_RESPONSE_FROM_DES, logMessage(response))
           handleDESError(response)
         case _ =>
