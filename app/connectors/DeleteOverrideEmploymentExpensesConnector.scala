@@ -29,7 +29,7 @@ class DeleteOverrideEmploymentExpensesConnector @Inject()(val http: HttpClient,
 
   def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
 
-    val incomeSourceUri: String = appConfig.desBaseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}"
+    val incomeSourceUri: String = baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}"
 
     def desCall(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
       http.DELETE[DeleteOverrideEmploymentExpensesResponse](incomeSourceUri)

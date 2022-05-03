@@ -27,10 +27,11 @@ object CreateOrAmendEmploymentExpensesHttpParser extends DESParser {
 
   override val parserName: String = "CreateOrAmendEmploymentExpenseHttpParser"
 
-  implicit object CreateOrAmendDividendsHttpReads extends HttpReads[CreateOrAmendEmploymentExpenseResponse] {
+  implicit object CreateOrAmendEmploymentExpensesHttpReads extends HttpReads[CreateOrAmendEmploymentExpenseResponse] {
     override def read(method: String, url: String, response: HttpResponse): CreateOrAmendEmploymentExpenseResponse = {
       response.status match {
         case NO_CONTENT => Right(())
+        case NOT_FOUND => Right(())
         case INTERNAL_SERVER_ERROR =>
           pagerDutyLog(INTERNAL_SERVER_ERROR_FROM_DES, logMessage(response))
           handleDESError(response)

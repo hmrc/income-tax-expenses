@@ -17,27 +17,26 @@
 package connectors
 
 import config.AppConfig
-import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.{CreateOrAmendDividendsHttpReads, CreateOrAmendEmploymentExpenseResponse}
+import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.{CreateOrAmendEmploymentExpenseResponse, CreateOrAmendEmploymentExpensesHttpReads}
 import models.EmploymentExpensesRequestModel
+import models.EmploymentExpensesRequestModel._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.DESTaxYearHelper.desTaxYearConverter
-import EmploymentExpensesRequestModel._
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CreateOrAmendEmploymentExpensesConnector @Inject()(val http: HttpClient,
-                                                         val appConfig: AppConfig)(implicit ec:ExecutionContext) extends DesConnector {
+                                                         val appConfig: AppConfig)(implicit ec: ExecutionContext) extends IFConnector {
 
   def createOrAmendEmploymentExpenses(nino: String, taxYear: Int, expense: EmploymentExpensesRequestModel)
                                      (implicit hc: HeaderCarrier): Future[CreateOrAmendEmploymentExpenseResponse] = {
-    val createExpensesUri: String =
-      appConfig.desBaseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}"
+    val createExpensesUri: String = baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}"
 
-    def desCall(implicit hc: HeaderCarrier): Future[CreateOrAmendEmploymentExpenseResponse] = {
+    def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[CreateOrAmendEmploymentExpenseResponse] = {
       http.PUT[EmploymentExpensesRequestModel, CreateOrAmendEmploymentExpenseResponse](createExpensesUri, expense)
     }
 
-    desCall(desHeaderCarrier(createExpensesUri))
+    integrationFrameworkCall(integrationFrameworkHeaderCarrier(createExpensesUri, CREATE_UPDATE_EXPENSES))
   }
 }
