@@ -21,6 +21,7 @@ import helpers.WiremockSpec
 import models.DesErrorBodyModel.invalidView
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
+import play.api.http.HeaderNames
 import play.api.http.Status._
 import play.api.libs.json.Json
 import utils.DESTaxYearHelper.desTaxYearConverter
@@ -31,6 +32,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
     implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds))
     val successNino: String = "AA123123A"
     val taxYear = 2021
+    val authorization: (String, String) = HeaderNames.AUTHORIZATION -> "mock-bearer-token"
     val agentClientCookie: Map[String, String] = Map("MTDITID" -> "555555555")
     val mtditidHeader: (String, String) = ("mtditid", "555555555")
     val requestHeaders: Seq[HttpHeader] = Seq(new HttpHeader("mtditid", "555555555"))
@@ -67,7 +69,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
 
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
-          .withHttpHeaders(mtditidHeader)
+          .withHttpHeaders(mtditidHeader, authorization)
           .get) {
           result =>
             result.status mustBe OK
@@ -81,7 +83,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
 
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> "INVALID"): _*)
-          .withHttpHeaders(mtditidHeader)
+          .withHttpHeaders(mtditidHeader, authorization)
           .get) {
           result =>
             result.status mustBe BAD_REQUEST
@@ -102,7 +104,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
 
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
-          .withHttpHeaders(mtditidHeader)
+          .withHttpHeaders(mtditidHeader, authorization)
           .get) {
           result =>
             result.status mustBe NOT_FOUND
@@ -122,7 +124,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
 
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
-          .withHttpHeaders(mtditidHeader)
+          .withHttpHeaders(mtditidHeader, authorization)
           .get) {
           result =>
             result.status mustBe UNPROCESSABLE_ENTITY
@@ -143,7 +145,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
 
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
-          .withHttpHeaders(mtditidHeader)
+          .withHttpHeaders(mtditidHeader, authorization)
           .get) {
           result =>
             result.status mustBe SERVICE_UNAVAILABLE
@@ -156,7 +158,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
 
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
-          .withHttpHeaders(mtditidHeader)
+          .withHttpHeaders(mtditidHeader, authorization)
           .get) {
           result =>
             result.status mustBe UNAUTHORIZED
