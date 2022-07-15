@@ -20,6 +20,7 @@ import helpers.WiremockSpec
 import models.{DesErrorBodyModel, Expenses, ExpensesType, IgnoreExpenses}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
+import play.api.http.HeaderNames
 import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.libs.ws.WSResponse
@@ -33,6 +34,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
   trait Setup {
     private val spanUnitLength = 5
     implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(spanUnitLength, Seconds))
+    val authorization: (String, String) = HeaderNames.AUTHORIZATION -> "mock-bearer-token"
     val agentClientCookie: Map[String, String] = Map("MTDITID" -> "555555555")
     val mtditidHeader: (String, String) = ("mtditid", "555555555")
     val view = "LATEST"
@@ -84,7 +86,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .put(requestBodyWithIgnoreExpenses(true))
           )
         }
@@ -99,7 +101,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .put(requestBodyWithoutIgnoreExpenses)
           )
         }
@@ -114,7 +116,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .put(requestBodyWithIgnoreExpenses(false))
           )
         }
@@ -128,7 +130,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .put(Json.obj())
           )
         }
@@ -145,7 +147,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .put(requestBodyWithoutIgnoreExpenses)
           )
         }
@@ -160,7 +162,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .put(requestBodyWithIgnoreExpenses(true))
           )
         }
@@ -181,9 +183,7 @@ class CreateOrAmendEmploymentExpensesITest extends WiremockSpec with ScalaFuture
 
         result.status mustBe UNAUTHORIZED
         result.body mustBe ""
-
       }
     }
-
   }
 }

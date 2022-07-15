@@ -21,6 +21,7 @@ import models.ToRemove.{All, Customer, HmrcHeld}
 import models.{DesErrorBodyModel, IgnoreExpenses}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
+import play.api.http.HeaderNames
 import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.libs.ws.WSResponse
@@ -33,6 +34,7 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
 
   trait Setup {
     implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds))
+    val authorization: (String, String) = HeaderNames.AUTHORIZATION -> "mock-bearer-token"
     val agentClientCookie: Map[String, String] = Map("MTDITID" -> "555555555")
     val mtditidHeader: (String, String) = ("mtditid", "555555555")
     val view = "LATEST"
@@ -53,7 +55,7 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources/${HmrcHeld.value}")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .delete()
           )
         }
@@ -68,7 +70,7 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources/${Customer.value}")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .delete()
           )
         }
@@ -84,7 +86,7 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources/${All.value}")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .delete()
           )
         }
@@ -99,7 +101,7 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources/$unsupported")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .delete()
           )
         }
@@ -117,7 +119,7 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources/${All.value}")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .delete()
           )
         }
@@ -132,7 +134,7 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
 
           await(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources/${All.value}")
             .withQueryStringParameters("taxYear" -> s"$taxYear")
-            .withHttpHeaders(mtditidHeader)
+            .withHttpHeaders(mtditidHeader, authorization)
             .delete()
           )
         }
@@ -155,6 +157,6 @@ class DeleteOrIgnoreEmploymentExpensesITest extends WiremockSpec with ScalaFutur
         result.body mustBe ""
       }
     }
-
   }
 }
+
