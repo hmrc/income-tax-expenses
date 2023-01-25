@@ -30,17 +30,18 @@ trait IFConnector {
 
   val GET_EXPENSES = "1668"
   val CREATE_UPDATE_EXPENSES = "1669"
+  val GET_EXPENSES_23_24 = "1866"
 
   lazy val baseUrl: String = appConfig.integrationFrameworkBaseUrl
 
   val headerCarrierConfig: Config = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 
-  private[connectors] def integrationFrameworkHeaderCarrier(url : String, apiNumber: String)(implicit hc: HeaderCarrier): HeaderCarrier = {
-    val isInternalHost = headerCarrierConfig.internalHostPatterns.exists(_.pattern.matcher(new URL(url).getHost).matches())
+  private[connectors] def integrationFrameworkHeaderCarrier(url: URL, apiNumber: String)(implicit hc: HeaderCarrier): HeaderCarrier = {
+    val isInternalHost = headerCarrierConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
     val hcWithAuth = hc.copy(authorization = Some(Authorization(s"Bearer ${appConfig.integrationFrameworkAuthorisationToken(apiNumber)}")))
 
-    if(isInternalHost) {
+    if (isInternalHost) {
       hcWithAuth.withExtraHeaders("Environment" -> appConfig.integrationFrameworkEnvironment)
     } else {
       hcWithAuth.withExtraHeaders(("Environment" -> appConfig.integrationFrameworkEnvironment) +: hcWithAuth.toExplicitHeaders: _*)

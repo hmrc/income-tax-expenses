@@ -30,12 +30,13 @@ import utils.DESTaxYearHelper.desTaxYearConverter
 
 class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
 
-  lazy val connector: GetEmploymentExpensesConnector = app.injector.instanceOf[GetEmploymentExpensesConnector]
+  private lazy val connector: GetEmploymentExpensesConnector = app.injector.instanceOf[GetEmploymentExpensesConnector]
 
-  lazy val httpClient: HttpClient = app.injector.instanceOf[HttpClient]
-  val nino: String = "123456789"
-  val taxYear: Int = 2022
-  val view: String = "latest"
+  private lazy val httpClient: HttpClient = app.injector.instanceOf[HttpClient]
+  private val nino: String = "123456789"
+  private val taxYear: Int = 2022
+  private val taxYear2324: Int = 2024
+  private val view: String = "latest"
 
   def appConfig(integrationFrameworkHost: String): BackendAppConfig = {
     new BackendAppConfig(app.injector.instanceOf[Configuration], app.injector.instanceOf[ServicesConfig]) {
@@ -44,7 +45,6 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
   }
 
   ".GetEmploymentExpensesConnector" should {
-
     "include internal headers" when {
       val headersSentToIntegrationFramework = Seq(
         new HttpHeader(HeaderNames.authorisation, "Bearer secret"),
@@ -54,30 +54,47 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
       val internalHost = "localhost"
       val externalHost = "127.0.0.1"
 
-      "the host for IF is 'Internal'" in {
-        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
-        val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(internalHost))
-        val expectedResult = Json.parse(expectedResponseBody).as[GetEmploymentExpensesModel]
+      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
+      val expectedResult = Json.parse(expectedResponseBody).as[GetEmploymentExpensesModel]
 
-        stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view",
-          OK, expectedResponseBody, headersSentToIntegrationFramework)
+      "API version is not 23-24" when {
+        "the host for IF is 'Internal'" in {
+          val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(internalHost))
 
-        val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc))
+          stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view",
+            OK, expectedResponseBody, headersSentToIntegrationFramework)
 
-        result mustBe Right(expectedResult)
+          await(connector.getEmploymentExpenses(nino, taxYear, view)(hc)) mustBe Right(expectedResult)
+        }
+
+        "the host for IF is 'External'" in {
+          val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(externalHost))
+
+          stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view",
+            OK, expectedResponseBody, headersSentToIntegrationFramework)
+
+          await(connector.getEmploymentExpenses(nino, taxYear, view)(hc)) mustBe Right(expectedResult)
+        }
       }
 
-      "the host for IF is 'External'" in {
-        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
-        val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(externalHost))
-        val expectedResult = Json.parse(expectedResponseBody).as[GetEmploymentExpensesModel]
+      "API version is 23-24" when {
+        "the host for IF is 'Internal'" in {
+          val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(internalHost))
 
-        stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view",
-          OK, expectedResponseBody, headersSentToIntegrationFramework)
+          stubGetWithResponseBody(s"/income-tax/expenses/employments/23-24/$nino\\?view=$view",
+            OK, expectedResponseBody, headersSentToIntegrationFramework)
 
-        val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc))
+          await(connector.getEmploymentExpenses(nino, taxYear2324, view)(hc)) mustBe Right(expectedResult)
+        }
 
-        result mustBe Right(expectedResult)
+        "the host for IF is 'External'" in {
+          val connector = new GetEmploymentExpensesConnector(httpClient, appConfig(externalHost))
+
+          stubGetWithResponseBody(s"/income-tax/expenses/employments/23-24/$nino\\?view=$view",
+            OK, expectedResponseBody, headersSentToIntegrationFramework)
+
+          await(connector.getEmploymentExpenses(nino, taxYear2324, view)(hc)) mustBe Right(expectedResult)
+        }
       }
     }
 

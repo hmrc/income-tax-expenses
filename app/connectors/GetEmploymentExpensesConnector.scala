@@ -21,21 +21,28 @@ import connectors.httpParsers.GetEmploymentExpensesHttpParser.{GetEmploymentExpe
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.DESTaxYearHelper.desTaxYearConverter
 
+import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class GetEmploymentExpensesConnector @Inject()(val http: HttpClient,
-                                               val appConfig: AppConfig)(implicit ec:ExecutionContext) extends IFConnector {
+class GetEmploymentExpensesConnector @Inject()(val http: HttpClient, val appConfig: AppConfig)
+                                              (implicit ec: ExecutionContext) extends IFConnector {
 
   def getEmploymentExpenses(nino: String, taxYear: Int, view: String)(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
-
-    val incomeSourcesUri: String =
-      baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}" + s"?view=$view"
-
-    def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
-      http.GET[GetEmploymentExpensesResponse](incomeSourcesUri)
+    val (url, apiVersion) = if (shouldUse2324(taxYear)) {
+      (new URL(baseUrl + s"/income-tax/expenses/employments/23-24/$nino" + s"?view=$view"), GET_EXPENSES_23_24)
+    } else {
+      (new URL(baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}" + s"?view=$view"), GET_EXPENSES)
     }
 
-    integrationFrameworkCall(integrationFrameworkHeaderCarrier(incomeSourcesUri, GET_EXPENSES))
+    def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
+      http.GET[GetEmploymentExpensesResponse](url)
+    }
+
+    integrationFrameworkCall(integrationFrameworkHeaderCarrier(url, apiVersion))
+  }
+
+  private def shouldUse2324(taxYear: Int): Boolean = {
+    taxYear == 2024
   }
 }
