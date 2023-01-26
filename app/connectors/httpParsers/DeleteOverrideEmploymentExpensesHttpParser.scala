@@ -39,7 +39,7 @@ object DeleteOverrideEmploymentExpensesHttpParser extends DESParser {
         case SERVICE_UNAVAILABLE =>
           pagerDutyLog(SERVICE_UNAVAILABLE_FROM_DES, logMessage(response))
           handleDESError(response)
-        case BAD_REQUEST | NOT_FOUND =>
+        case BAD_REQUEST | NOT_FOUND | UNPROCESSABLE_ENTITY =>
           pagerDutyLog(FOURXX_RESPONSE_FROM_DES, logMessage(response))
           handleDESError(response)
         case _ =>
