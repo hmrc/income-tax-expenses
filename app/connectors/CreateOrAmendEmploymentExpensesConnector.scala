@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import models.EmploymentExpensesRequestModel._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.DESTaxYearHelper.desTaxYearConverter
 
+import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,7 +32,7 @@ class CreateOrAmendEmploymentExpensesConnector @Inject()(val http: HttpClient,
 
   def createOrAmendEmploymentExpenses(nino: String, taxYear: Int, expense: EmploymentExpensesRequestModel)
                                      (implicit hc: HeaderCarrier): Future[CreateOrAmendEmploymentExpenseResponse] = {
-    val createExpensesUri: String = baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}"
+    val createExpensesUri: URL = new URL(baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}")
 
     def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[CreateOrAmendEmploymentExpenseResponse] = {
       http.PUT[EmploymentExpensesRequestModel, CreateOrAmendEmploymentExpenseResponse](createExpensesUri, expense)
