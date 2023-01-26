@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
       unauthorized
     }(
       mtdItId =>
-        authorised.retrieve(affinityGroup) {
+        authorised().retrieve(affinityGroup) {
           case Some(AffinityGroup.Agent) => agentAuthentication(block, mtdItId)(request, headerCarrier)
           case _ => individualAuthentication(block, mtdItId)(request, headerCarrier)
         } recover {
@@ -66,7 +66,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
 
   private[predicates] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
                                                      (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
-    authorised.retrieve(allEnrolments and confidenceLevel) {
+    authorised().retrieve(allEnrolments and confidenceLevel) {
       case enrolments ~ userConfidence if userConfidence.level >= minimumConfidenceLevel =>
         val optionalMtdItId: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.Individual, EnrolmentIdentifiers.individualId, enrolments)
         val optionalNino: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.nino, EnrolmentIdentifiers.nino, enrolments)

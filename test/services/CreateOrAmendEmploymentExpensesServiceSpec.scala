@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class CreateOrAmendEmploymentExpensesServiceSpec extends TestUtils {
   : CallHandler3[String, Int, HeaderCarrier, Future[DeleteOverrideEmploymentExpensesResponse]] = {
     (mockDeleteConnector.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
       .expects(nino, taxYear, *)
-      .returning(Future.successful(Right(Unit)))
+      .returning(Future.successful(Right(())))
 
   }
 
