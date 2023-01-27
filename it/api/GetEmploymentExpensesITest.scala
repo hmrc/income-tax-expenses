@@ -70,7 +70,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
           .withHttpHeaders(mtditidHeader, authorization)
-          .get) {
+          .get()) {
           result =>
             result.status mustBe OK
             Json.parse(result.body) mustBe Json.parse(getEmploymentExpensesIFResponseBody)
@@ -84,7 +84,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> "INVALID"): _*)
           .withHttpHeaders(mtditidHeader, authorization)
-          .get) {
+          .get()) {
           result =>
             result.status mustBe BAD_REQUEST
             Json.parse(result.body) mustBe Json.toJson(invalidView)
@@ -105,7 +105,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
           .withHttpHeaders(mtditidHeader, authorization)
-          .get) {
+          .get()) {
           result =>
             result.status mustBe NOT_FOUND
             result.body mustBe desErrorBody
@@ -125,7 +125,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
           .withHttpHeaders(mtditidHeader, authorization)
-          .get) {
+          .get()) {
           result =>
             result.status mustBe UNPROCESSABLE_ENTITY
             result.body mustBe "{\"code\":\"INVALID_DATE_RANGE\",\"reason\":\"The remote endpoint has indicated that date range exceeds CY-4.\"}"
@@ -146,7 +146,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
           .withHttpHeaders(mtditidHeader, authorization)
-          .get) {
+          .get()) {
           result =>
             result.status mustBe SERVICE_UNAVAILABLE
             result.body mustBe "{\"code\":\"SERVICE_UNAVAILABLE\",\"reason\":\"The service is temporarily unavailable\"}"
@@ -159,7 +159,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
           .withHttpHeaders(mtditidHeader, authorization)
-          .get) {
+          .get()) {
           result =>
             result.status mustBe UNAUTHORIZED
             result.body mustBe ""
@@ -169,7 +169,7 @@ class GetEmploymentExpensesITest extends WiremockSpec with ScalaFutures {
       "return 401 if the request has no MTDITID header present" in new Setup {
         whenReady(buildClient(s"/income-tax-expenses/income-tax/nino/$successNino/sources")
           .withQueryStringParameters(Seq("taxYear" -> s"$taxYear", "view" -> view): _*)
-          .get) {
+          .get()) {
           result =>
             result.status mustBe UNAUTHORIZED
             result.body mustBe ""

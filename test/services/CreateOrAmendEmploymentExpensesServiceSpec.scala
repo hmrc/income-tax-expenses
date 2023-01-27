@@ -57,7 +57,7 @@ class CreateOrAmendEmploymentExpensesServiceSpec extends TestUtils {
   : CallHandler3[String, Int, HeaderCarrier, Future[DeleteOverrideEmploymentExpensesResponse]] = {
     (mockDeleteConnector.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
       .expects(nino, taxYear, *)
-      .returning(Future.successful(Right(Unit)))
+      .returning(Future.successful(Right(())))
 
   }
 
