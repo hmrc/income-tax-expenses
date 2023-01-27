@@ -17,7 +17,7 @@
 package services
 
 import connectors.httpParsers.DeleteOverrideEmploymentExpensesHttpParser.DeleteOverrideEmploymentExpensesResponse
-import connectors.{CreateOrAmendEmploymentExpensesConnector, DeleteOverrideEmploymentExpensesConnector}
+import connectors.{CreateOrAmendEmploymentExpensesConnector, DeleteOverrideEmploymentExpensesConnector, DeleteOverrideEmploymentExpensesIFConnector}
 import models.ToRemove.{All, Customer, HmrcHeld}
 import models.{IgnoreExpenses, ToRemove}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -25,7 +25,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class DeleteOrIgnoreEmploymentExpensesService @Inject()(deleteConnector: DeleteOverrideEmploymentExpensesConnector,
+class DeleteOrIgnoreEmploymentExpensesService @Inject()(deleteDESConnector: DeleteOverrideEmploymentExpensesConnector,
+                                                        deleteIFConnector: DeleteOverrideEmploymentExpensesIFConnector,
                                                         createOrAmendConnector: CreateOrAmendEmploymentExpensesConnector) {
 
   def deleteOrIgnoreEmploymentExpenses(nino: String, toRemove: ToRemove, taxYear: Int)
@@ -33,9 +34,9 @@ class DeleteOrIgnoreEmploymentExpensesService @Inject()(deleteConnector: DeleteO
 
     toRemove match {
       case HmrcHeld => createOrAmendConnector.createOrAmendEmploymentExpenses(nino, taxYear, IgnoreExpenses(true))
-      case Customer => deleteConnector.deleteOverrideEmploymentExpenses(nino, taxYear)
+      case Customer => deleteOverrideEmploymentExpenses(nino, taxYear)
       case All =>
-        deleteConnector.deleteOverrideEmploymentExpenses(nino, taxYear)
+        deleteOverrideEmploymentExpenses(nino, taxYear)
           .flatMap{
             case Right(_) => createOrAmendConnector.createOrAmendEmploymentExpenses(nino, taxYear, IgnoreExpenses(true))
             case Left(error) => Future(Left(error))
@@ -43,4 +44,15 @@ class DeleteOrIgnoreEmploymentExpensesService @Inject()(deleteConnector: DeleteO
     }
   }
 
+  private def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int) (implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
+    if(shouldUse2324(taxYear)) {
+      deleteIFConnector.deleteOverrideEmploymentExpenses(nino)
+    } else {
+      deleteDESConnector.deleteOverrideEmploymentExpenses(nino, taxYear)
+    }
+  }
+
+  private def shouldUse2324(taxYear: Int): Boolean = {
+    taxYear == 2024
+  }
 }

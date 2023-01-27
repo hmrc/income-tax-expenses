@@ -30,6 +30,7 @@ trait IFConnector {
 
   val GET_EXPENSES = "1668"
   val CREATE_UPDATE_EXPENSES = "1669"
+  val DELETE_OVERRIDE_EXPENSES_23_24 = "1860"
   val GET_EXPENSES_23_24 = "1866"
 
   lazy val baseUrl: String = appConfig.integrationFrameworkBaseUrl
