@@ -36,6 +36,8 @@ class DeleteOverrideEmploymentExpensesIFConnectorSpec extends WiremockSpec {
     }
 
   private val nino: String = "123456789"
+  private val taxYear: Int = 2024
+
   private implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
 
   ".DeleteOverrideEmploymentExpensesIFConnector" should {
@@ -54,7 +56,7 @@ class DeleteOverrideEmploymentExpensesIFConnectorSpec extends WiremockSpec {
 
         stubDeleteWithoutResponseBody(url, NO_CONTENT, headers)
 
-        await(connector.deleteOverrideEmploymentExpenses(nino)(hc)) mustBe Right(())
+        await(connector.deleteOverrideEmploymentExpenses(nino, taxYear)(hc)) mustBe Right(())
       }
 
       "the host for IF is external" in {
@@ -62,7 +64,7 @@ class DeleteOverrideEmploymentExpensesIFConnectorSpec extends WiremockSpec {
 
         stubDeleteWithoutResponseBody(url, NO_CONTENT, headers)
 
-        await(connector.deleteOverrideEmploymentExpenses(nino)(hc)) mustBe Right(())
+        await(connector.deleteOverrideEmploymentExpenses(nino, taxYear)(hc)) mustBe Right(())
       }
     }
 
@@ -75,7 +77,7 @@ class DeleteOverrideEmploymentExpensesIFConnectorSpec extends WiremockSpec {
 
           stubDeleteWithResponseBody(url, status, error.toJson.toString())
 
-          await(connector.deleteOverrideEmploymentExpenses(nino)(hc)) mustBe Left(error)
+          await(connector.deleteOverrideEmploymentExpenses(nino, taxYear)(hc)) mustBe Left(error)
         }
       }
 
@@ -84,7 +86,7 @@ class DeleteOverrideEmploymentExpensesIFConnectorSpec extends WiremockSpec {
 
         stubDeleteWithResponseBody(url, BAD_GATEWAY, error.toJson.toString())
 
-        await(connector.deleteOverrideEmploymentExpenses(nino)(hc)) mustBe Left(error)
+        await(connector.deleteOverrideEmploymentExpenses(nino, taxYear)(hc)) mustBe Left(error)
       }
     }
   }

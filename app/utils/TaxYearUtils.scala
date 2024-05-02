@@ -16,23 +16,18 @@
 
 package utils
 
-import uk.gov.hmrc.http.HttpResponse
+object TaxYearUtils {
 
-class PagerDutyHelperTest extends TestUtils {
-
-  "PagerDutyHelper" should {
-
-    val status = 200
-
-    "return string containing correlationId when response contains correlationId" in {
-      val result = PagerDutyHelper.getCorrelationId(HttpResponse(status, "", Map("CorrelationId" -> Seq("some_correlation_id"))))
-      result mustBe " CorrelationId: some_correlation_id"
+  def toTaxYearParam(taxYear: Int): String = {
+    if (taxYear - 1 >= 2023) {
+      s"${(taxYear - 1).toString takeRight 2}-${taxYear.toString takeRight 2}"
+    } else {
+      s"${taxYear - 1}-${taxYear.toString takeRight 2}"
     }
-
-    "return empty string when response does not contain correlationId" in {
-      val result = PagerDutyHelper.getCorrelationId(HttpResponse(status, ""))
-      result mustBe ""
-    }
-
   }
+
+  def isYearAfter2324(taxYear: Int): Boolean = {
+    taxYear >= 2024
+  }
+
 }

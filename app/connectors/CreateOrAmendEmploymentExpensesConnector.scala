@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,6 @@ class CreateOrAmendEmploymentExpensesConnector @Inject()(val http: HttpClient,
       http.PUT[EmploymentExpensesRequestModel, CreateOrAmendEmploymentExpenseResponse](createExpensesUri, expense)
     }
 
-    integrationFrameworkCall(integrationFrameworkHeaderCarrier(createExpensesUri, CREATE_UPDATE_EXPENSES))
+    integrationFrameworkCall(integrationFrameworkHeaderCarrier(createExpensesUri, CREATE_UPDATE_EXPENSES_BEFORE_23_24))
   }
 }
