@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,11 @@ trait IFConnector {
 
   val appConfig: AppConfig
 
-  val GET_EXPENSES = "1668"
-  val CREATE_UPDATE_EXPENSES = "1669"
-  val DELETE_OVERRIDE_EXPENSES_23_24 = "1860"
-  val GET_EXPENSES_23_24 = "1866"
+  val GET_EXPENSES_BEFORE_23_24 = "1668"
+  val GET_EXPENSES_AFTER_23_24 = "1866"
+
+  val CREATE_UPDATE_EXPENSES_BEFORE_23_24 = "1669"
+  val DELETE_OVERRIDE_EXPENSES_AFTER_23_24 = "1860"
 
   lazy val baseUrl: String = appConfig.integrationFrameworkBaseUrl
 

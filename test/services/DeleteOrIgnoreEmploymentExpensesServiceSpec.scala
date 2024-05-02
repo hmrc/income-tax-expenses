@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,16 +72,16 @@ class DeleteOrIgnoreEmploymentExpensesServiceSpec extends TestUtils {
 
       "year is 23-24" should {
         "toRemove is Customer and connector call(s) succeed using the IF connector" in {
-          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String)(_: HeaderCarrier))
-            .expects(nino, *)
+          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
+            .expects(nino, taxYear2024, *)
             .returning(Future.successful(Right(())))
 
           await(underTest.deleteOrIgnoreEmploymentExpenses(nino, Customer, taxYear2024)) mustBe Right(())
         }
 
         "toRemove is All and connector call(s) succeed using the IF connector" in {
-          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String)(_: HeaderCarrier))
-            .expects(nino, *)
+          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
+            .expects(nino, taxYear2024, *)
             .returning(Future.successful(Right(())))
 
           (mockCreateOrAmendEmploymentExpensesConnector.createOrAmendEmploymentExpenses(_: String, _: Int, _: EmploymentExpensesRequestModel)(_: HeaderCarrier))
@@ -144,8 +144,8 @@ class DeleteOrIgnoreEmploymentExpensesServiceSpec extends TestUtils {
         "toRemove is Customer and deleteOverrideExpenses IF connector call fails" in {
           val error = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel("CODE", "REASON"))
 
-          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String)(_: HeaderCarrier))
-            .expects(nino, *)
+          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
+            .expects(nino, taxYear2024, *)
             .returning(Future.successful(Left(error)))
 
           await(underTest.deleteOrIgnoreEmploymentExpenses(nino, Customer, taxYear2024)) mustBe Left(error)
@@ -154,8 +154,8 @@ class DeleteOrIgnoreEmploymentExpensesServiceSpec extends TestUtils {
         "toRemove is All and deleteOverrideExpenses IF connector call fails" in {
           val error = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel("CODE", "REASON"))
 
-          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String)(_: HeaderCarrier))
-            .expects(nino, *)
+          (mockDeleteOverrideExpensesIFConnector.deleteOverrideEmploymentExpenses(_: String, _: Int)(_: HeaderCarrier))
+            .expects(nino, taxYear2024, *)
             .returning(Future.successful(Left(error)))
 
           await(underTest.deleteOrIgnoreEmploymentExpenses(nino, All, taxYear2024)) mustBe Left(error)

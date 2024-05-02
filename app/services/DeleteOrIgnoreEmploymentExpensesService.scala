@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import connectors.{CreateOrAmendEmploymentExpensesConnector, DeleteOverrideEmplo
 import models.ToRemove.{All, Customer, HmrcHeld}
 import models.{IgnoreExpenses, ToRemove}
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.TaxYearUtils.isYearAfter2324
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,22 +38,19 @@ class DeleteOrIgnoreEmploymentExpensesService @Inject()(deleteDESConnector: Dele
       case Customer => deleteOverrideEmploymentExpenses(nino, taxYear)
       case All =>
         deleteOverrideEmploymentExpenses(nino, taxYear)
-          .flatMap{
+          .flatMap {
             case Right(_) => createOrAmendConnector.createOrAmendEmploymentExpenses(nino, taxYear, IgnoreExpenses(true))
             case Left(error) => Future(Left(error))
           }
     }
   }
 
-  private def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int) (implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
-    if(shouldUse2324(taxYear)) {
-      deleteIFConnector.deleteOverrideEmploymentExpenses(nino)
+  private def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
+    if (isYearAfter2324(taxYear)) {
+      deleteIFConnector.deleteOverrideEmploymentExpenses(nino, taxYear)
     } else {
       deleteDESConnector.deleteOverrideEmploymentExpenses(nino, taxYear)
     }
   }
 
-  private def shouldUse2324(taxYear: Int): Boolean = {
-    taxYear == 2024
-  }
 }

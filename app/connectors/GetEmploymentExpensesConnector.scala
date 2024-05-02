@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import config.AppConfig
 import connectors.httpParsers.GetEmploymentExpensesHttpParser.{GetEmploymentExpensesHttpReads, GetEmploymentExpensesResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.DESTaxYearHelper.desTaxYearConverter
+import utils.TaxYearUtils.{isYearAfter2324, toTaxYearParam}
 
 import java.net.URL
 import javax.inject.Inject
@@ -29,10 +30,10 @@ class GetEmploymentExpensesConnector @Inject()(val http: HttpClient, val appConf
                                               (implicit ec: ExecutionContext) extends IFConnector {
 
   def getEmploymentExpenses(nino: String, taxYear: Int, view: String)(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
-    val (url, apiVersion) = if (shouldUse2324(taxYear)) {
-      (new URL(baseUrl + s"/income-tax/expenses/employments/23-24/$nino" + s"?view=$view"), GET_EXPENSES_23_24)
+    val (url, apiVersion) = if (isYearAfter2324(taxYear)) {
+      (new URL(baseUrl + s"/income-tax/expenses/employments/${toTaxYearParam(taxYear)}/$nino" + s"?view=$view"), GET_EXPENSES_AFTER_23_24)
     } else {
-      (new URL(baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}" + s"?view=$view"), GET_EXPENSES)
+      (new URL(baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}" + s"?view=$view"), GET_EXPENSES_BEFORE_23_24)
     }
 
     def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
@@ -42,7 +43,4 @@ class GetEmploymentExpensesConnector @Inject()(val http: HttpClient, val appConf
     integrationFrameworkCall(integrationFrameworkHeaderCarrier(url, apiVersion))
   }
 
-  private def shouldUse2324(taxYear: Int): Boolean = {
-    taxYear == 2024
-  }
 }

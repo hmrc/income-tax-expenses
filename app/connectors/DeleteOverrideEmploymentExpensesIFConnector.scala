@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package connectors
 import config.AppConfig
 import connectors.httpParsers.DeleteOverrideEmploymentExpensesHttpParser.{DeleteOverrideEmploymentExpensesHttpReads, DeleteOverrideEmploymentExpensesResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import utils.TaxYearUtils.toTaxYearParam
 
 import java.net.URL
 import javax.inject.Inject
@@ -27,13 +28,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class DeleteOverrideEmploymentExpensesIFConnector @Inject()(val http: HttpClient,
                                                             val appConfig: AppConfig)(implicit val ec: ExecutionContext) extends IFConnector {
 
-  def deleteOverrideEmploymentExpenses(nino: String)(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
-    val uri: URL = new URL(baseUrl + s"/income-tax/expenses/employments/23-24/$nino")
+  def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
+
+    val uri: URL = new URL(baseUrl + s"/income-tax/expenses/employments/${toTaxYearParam(taxYear)}/$nino")
 
     def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
       http.DELETE[DeleteOverrideEmploymentExpensesResponse](uri)
     }
 
-    integrationFrameworkCall(integrationFrameworkHeaderCarrier(uri, DELETE_OVERRIDE_EXPENSES_23_24))
+    integrationFrameworkCall(integrationFrameworkHeaderCarrier(uri, DELETE_OVERRIDE_EXPENSES_AFTER_23_24))
   }
 }

@@ -36,9 +36,9 @@ lazy val microservice = Project(appName, file("."))
     libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always)
   )
   .settings(
-    majorVersion                     := 0,
-    scalaVersion                     := "2.13.10",
-    libraryDependencies              ++= AppDependencies.compile ++ AppDependencies.test,
+    majorVersion := 0,
+    scalaVersion := "2.13.10",
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
   )
   .settings(publishingSettings: _*)
   .configs(IntegrationTest)
