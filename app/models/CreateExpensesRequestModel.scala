@@ -16,10 +16,10 @@
 
 package models
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class CreateExpensesRequestModel(ignoreExpenses: Option[Boolean], expenses: ExpensesType)
 
 object CreateExpensesRequestModel {
-  implicit val format = Json.format[CreateExpensesRequestModel]
+  implicit val format: OFormat[CreateExpensesRequestModel] = Json.format[CreateExpensesRequestModel]
 }
