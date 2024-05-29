@@ -21,20 +21,22 @@ import play.api.libs.json._
 sealed trait EmploymentExpensesRequestModel
 
 final case class Expenses(expenses: ExpensesType) extends EmploymentExpensesRequestModel
-object Expenses { implicit val formats = Json.format[Expenses] }
+object Expenses {
+  implicit val formats: OFormat[Expenses] = Json.format[Expenses] }
 
 final case class IgnoreExpenses(ignoreExpenses: Boolean) extends EmploymentExpensesRequestModel
-object IgnoreExpenses { implicit val formats = Json.format[IgnoreExpenses] }
+object IgnoreExpenses {
+  implicit val formats: OFormat[IgnoreExpenses] = Json.format[IgnoreExpenses] }
 
 object EmploymentExpensesRequestModel {
-  implicit val writes = new Writes[EmploymentExpensesRequestModel] {
+  implicit val writes: Writes[EmploymentExpensesRequestModel] = new Writes[EmploymentExpensesRequestModel] {
     override def writes(model: EmploymentExpensesRequestModel) = model match {
       case e: Expenses => Json.toJson(e)
       case ie: IgnoreExpenses => Json.toJson(ie)
     }
   }
 
-  implicit val reads = new Reads[EmploymentExpensesRequestModel] {
+  implicit val reads: Reads[EmploymentExpensesRequestModel] = new Reads[EmploymentExpensesRequestModel] {
     override def reads(json: JsValue): JsResult[EmploymentExpensesRequestModel] = {
       IgnoreExpenses.formats.reads(json) orElse Expenses.formats.reads(json)
     }
