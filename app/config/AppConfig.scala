@@ -32,6 +32,7 @@ class BackendAppConfig @Inject()(config: Configuration, servicesConfig: Services
   val integrationFrameworkBaseUrl: String = servicesConfig.baseUrl("integration-framework")
   val integrationFrameworkEnvironment: String = config.get[String]("microservice.services.integration-framework.environment")
   def integrationFrameworkAuthorisationToken(api:String): String = config.get[String](s"microservice.services.integration-framework.authorisation-token.$api")
+  def emaSupportingAgentsEnabled: Boolean = config.get[Boolean]("feature-switch.ema-supporting-agents-enabled")
 }
 
 @ImplementedBy(classOf[BackendAppConfig])
@@ -45,4 +46,5 @@ trait AppConfig  {
   val integrationFrameworkBaseUrl: String
   val integrationFrameworkEnvironment: String
   def integrationFrameworkAuthorisationToken(api: String): String
+  def emaSupportingAgentsEnabled: Boolean
 }

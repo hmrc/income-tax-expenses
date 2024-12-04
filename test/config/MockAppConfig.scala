@@ -26,4 +26,5 @@ class MockAppConfig extends AppConfig {
   override val integrationFrameworkEnvironment: String = "test"
   override def integrationFrameworkAuthorisationToken(api: String): String = "someToken"
   override val integrationFrameworkBaseUrl: String = "/integrationFramework"
+  override def emaSupportingAgentsEnabled: Boolean = false
 }
