@@ -16,7 +16,7 @@
 
 package controllers.predicates
 
-import common.{EnrolmentIdentifiers, EnrolmentKeys}
+import common.{DelegatedAuthRules, EnrolmentIdentifiers, EnrolmentKeys}
 import config.AppConfig
 import models.User
 import play.api.Logger
@@ -67,6 +67,17 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
 
   val minimumConfidenceLevel: Int = ConfidenceLevel.L250.level
 
+  def sessionId(implicit request: Request[_], hc: HeaderCarrier): Option[String] = {
+    lazy val key = "sessionId"
+    if (hc.sessionId.isDefined) {
+      hc.sessionId.map(_.value)
+    } else if (request.headers.get(key).isDefined) {
+      request.headers.get(key)
+    } else {
+      None
+    }
+  }
+
   private[predicates] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
                                                      (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
     authorised().retrieve(allEnrolments and confidenceLevel) {
@@ -78,23 +89,20 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
           case (Some(authMTDITID), Some(_)) =>
             sessionIdFrom(request, hc) match {
               case Some(sessionId) =>
-            enrolments.enrolments.collectFirst {
-              case Enrolment(EnrolmentKeys.Individual, enrolmentIdentifiers, _, _)
-                if enrolmentIdentifiers.exists(identifier => identifier.key == EnrolmentIdentifiers.individualId && identifier.value == requestMtdItId) =>
-                block(User(requestMtdItId, None, sessionId))
-            } getOrElse {
-              logger.info(s"[AuthorisedAction][individualAuthentication] Non-agent with an invalid MTDITID. " +
-                s"MTDITID in auth matches MTDITID in request: ${authMTDITID == requestMtdItId}")
-              unauthorized
-            }
+                enrolments.enrolments.collectFirst {
+                  case Enrolment(EnrolmentKeys.Individual, enrolmentIdentifiers, _, _)
+                    if enrolmentIdentifiers.exists(identifier => identifier.key == EnrolmentIdentifiers.individualId && identifier.value == requestMtdItId) =>
+                    block(User(requestMtdItId, None, sessionId))
+                } getOrElse {
+                  logger.info(s"[AuthorisedAction][individualAuthentication] Non-agent with an invalid MTDITID. " +
+                    s"MTDITID in auth matches MTDITID in request: ${authMTDITID == requestMtdItId}")
+                  unauthorized
+                }
               case None =>
-                logger.info(s"[AuthorisedAction] - No session id in request")
+                logger.info(s"[AuthorisedAction][individualAuthentication] - No session id in request")
                 unauthorized
             }
 
-          case (_, None) =>
-            logger.info(s"[AuthorisedAction][individualAuthentication] - User has no nino.")
-            unauthorized
           case (None, _) =>
             logger.info(s"[AuthorisedAction][individualAuthentication] - User has no MTD IT enrolment.")
             unauthorized
@@ -105,25 +113,27 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
     }
   }
 
-  private[predicates] def agentAuthPredicate(mtdId: String) =
-    Enrolment("HMRC-MTD-IT")
-      .withIdentifier("MTDITID", mtdId)
-      .withDelegatedAuthRule("mtd-it-auth")
+  private[predicates] def agentAuthPredicate(mtdId: String): Predicate =
+    Enrolment(EnrolmentKeys.Individual)
+      .withIdentifier(EnrolmentIdentifiers.individualId, mtdId)
+      .withDelegatedAuthRule(DelegatedAuthRules.agentDelegatedAuthRule)
 
   private[predicates] def secondaryAgentPredicate(mtdId: String): Predicate =
-    Enrolment("HMRC-MTD-IT-SUPP")
-      .withIdentifier("MTDITID", mtdId)
-      .withDelegatedAuthRule("mtd-it-auth-supp")
+    Enrolment(EnrolmentKeys.SupportingAgent)
+      .withIdentifier(EnrolmentIdentifiers.individualId, mtdId)
+      .withDelegatedAuthRule(DelegatedAuthRules.supportingAgentDelegatedAuthRule)
 
-  private[predicates] def agentAuthentication[A](block: User[A] => Future[Result], mtdItId: String)
+  private[predicates] def agentAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
                                                 (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
-    authorised(agentAuthPredicate(mtdItId))
+
+    authorised(agentAuthPredicate(requestMtdItId))
       .retrieve(allEnrolments) { enrolments =>
-        populateAgent(block, mtdItId, None, enrolments)
-      }.recoverWith(agentRecovery(block, mtdItId))
+        populateAgent(block, requestMtdItId, enrolments)
+      }.recoverWith(agentRecovery(block, requestMtdItId))
   }
 
-  private def agentRecovery[A](block: User[A] => Future[Result], mtdItId: String)
+  private def agentRecovery[A](block: User[A] => Future[Result],
+                               mtdItId: String)
                               (implicit request: Request[A], hc: HeaderCarrier): PartialFunction[Throwable, Future[Result]] = {
     case _: NoActiveSession =>
       logger.info(s"[AuthorisedAction][agentAuthentication] - No active session.")
@@ -132,7 +142,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
       if (appConfig.emaSupportingAgentsEnabled) {
         authorised(secondaryAgentPredicate(mtdItId))
           .retrieve(allEnrolments) { enrolments =>
-            populateAgent(block, mtdItId, None, enrolments)
+            populateAgent(block, mtdItId, enrolments)
           }.recoverWith {
             case _: AuthorisationException =>
               logger.info(s"[AuthorisedAction][agentAuthentication] - Agent does not have delegated authority for Client.")
@@ -146,7 +156,6 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
 
   private def populateAgent[A](block: User[A] => Future[Result],
                                mtdItId: String,
-                               nino: Option[String],
                                enrolments: Enrolments)(implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
     enrolmentGetIdentifierValue(EnrolmentKeys.Agent, EnrolmentIdentifiers.agentReference, enrolments) match {
       case Some(arn) =>
@@ -154,7 +163,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
           logger.info(s"[AuthorisedAction][agentAuthentication] - No session id in request.")
           unauthorized
         } { sessionId =>
-          block(User(mtdItId, None, sessionId))
+          block(User(mtdItId, Some(arn), sessionId))
         }
       case None =>
         logger.info("[AuthorisedAction][agentAuthentication] Agent with no HMRC-AS-AGENT enrolment.")

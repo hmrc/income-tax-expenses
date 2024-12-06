@@ -25,7 +25,7 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout}
 import services.DeleteOrIgnoreEmploymentExpensesService
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 import utils.TestUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,7 +62,7 @@ class DeleteOrIgnoreEmploymentExpensesControllerSpec extends TestUtils {
     }
 
     val mtditid: String = "1234567890"
-    val fakeRequest = FakeRequest("DELETE", "/TBC").withHeaders("mtditid" -> mtditid)
+    val fakeRequest = FakeRequest("DELETE", "/TBC").withHeaders("mtditid" -> mtditid, SessionKeys.sessionId -> "some-session-id")
     val validToRemove = HmrcHeld.value
     val invalidToRemove = "unsupported"
 

@@ -16,7 +16,7 @@
 
 package config
 
-class MockAppConfig extends AppConfig {
+class MockAppConfig(supportingAgentsEnabled: Boolean = false) extends AppConfig {
   override val authBaseUrl: String = "/auth"
   override val auditingEnabled: Boolean = true
   override val graphiteHost: String = "/graphite"
@@ -26,5 +26,5 @@ class MockAppConfig extends AppConfig {
   override val integrationFrameworkEnvironment: String = "test"
   override def integrationFrameworkAuthorisationToken(api: String): String = "someToken"
   override val integrationFrameworkBaseUrl: String = "/integrationFramework"
-  override def emaSupportingAgentsEnabled: Boolean = false
+  override def emaSupportingAgentsEnabled: Boolean = supportingAgentsEnabled
 }

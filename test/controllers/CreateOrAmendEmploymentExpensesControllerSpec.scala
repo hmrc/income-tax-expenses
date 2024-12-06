@@ -25,7 +25,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout}
 import services.CreateOrAmendEmploymentExpensesService
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 import utils.TestUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,7 +40,7 @@ class CreateOrAmendEmploymentExpensesControllerSpec extends TestUtils {
   val mtditid: String = "1234567890"
   val taxYear: Int = 2022
 
-  val fakePutRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("PUT", "/some_path_tbc").withHeaders("mtditid" -> mtditid)
+  val fakePutRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("PUT", "/some_path_tbc").withHeaders("mtditid" -> mtditid, SessionKeys.sessionId -> "some-session-id")
 
   val serverErrorModel: DesErrorBodyModel = DesErrorBodyModel("SERVER_ERROR", "Internal server error")
   
