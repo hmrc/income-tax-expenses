@@ -54,6 +54,7 @@ class AuthorisedActionSpec extends TestUtils {
       authorisedAction.enrolmentGetIdentifierValue(EnrolmentKeys.Individual, EnrolmentIdentifiers.individualId, enrolments) mustBe Some(returnValue)
       authorisedAction.enrolmentGetIdentifierValue(EnrolmentKeys.Agent, EnrolmentIdentifiers.agentReference, enrolments) mustBe Some(returnValueAgent)
     }
+
     "return a None" when {
       val key = "someKey"
       val identifierKey = "anIdentifier"
@@ -127,6 +128,7 @@ class AuthorisedActionSpec extends TestUtils {
             status(result) mustBe UNAUTHORIZED
           }
         }
+
         "the correct enrolment and nino exist but low CL" which {
           val block: User[AnyContent] => Future[Result] = user => Future.successful(Ok(user.mtditid))
           val mtditid = "AAAAAA"
@@ -191,6 +193,7 @@ class AuthorisedActionSpec extends TestUtils {
         }
 
       }
+
       "return a UNAUTHORIZED" when {
 
         "the correct enrolment is missing" which {
@@ -233,6 +236,7 @@ class AuthorisedActionSpec extends TestUtils {
           status(result) mustBe UNAUTHORIZED
         }
       }
+
       "the correct enrolment and nino exist but low CL" which {
         val block: User[AnyContent] => Future[Result] = user => Future.successful(Ok(user.mtditid))
         val mtditid = "AAAAAA"
@@ -275,6 +279,7 @@ class AuthorisedActionSpec extends TestUtils {
           status(result) mustBe UNAUTHORIZED
         }
       }
+
       "the correct nino exist but no enrolment" which {
         val block: User[AnyContent] => Future[Result] = user => Future.successful(Ok(user.mtditid))
         val id = "AAAAAA"

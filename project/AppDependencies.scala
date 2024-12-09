@@ -26,13 +26,13 @@ object AppDependencies {
   )
 
   val test: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-test-play-30"   % bootstrapPlayVersion                % Test,
-    "org.scalatest"           %% "scalatest"                % "3.2.9"                 % Test,
-    "org.playframework"       %% "play-test"                % current                 % Test,
-    "org.pegdown"             %  "pegdown"                  % "1.6.0"                 % "test, it",
-    "com.vladsch.flexmark"    %  "flexmark-all"             % "0.64.6"                % "test, it",
-    "org.scalatestplus.play"  %% "scalatestplus-play"       % "7.0.1"                 % "test, it",
-    "com.github.tomakehurst"  %  "wiremock-jre8-standalone"            % "2.35.1"                % "test, it",
-    "org.scalamock"           %% "scalamock"                % "5.2.0"                 % Test
+    "uk.gov.hmrc"                   %% "bootstrap-test-play-30"     % bootstrapPlayVersion    % Test,
+    "org.scalatest"                 %% "scalatest"                  % "3.2.9"                 % Test,
+    "org.playframework"             %% "play-test"                  % current                 % Test,
+    "org.scalamock"                 %% "scalamock"                  % "5.2.0"                 % Test,
+    "org.pegdown"                   %  "pegdown"                    % "1.6.0"                 % "test, it",
+    "com.vladsch.flexmark"          %  "flexmark-all"               % "0.64.6"                % "test, it",
+    "org.scalatestplus.play"        %% "scalatestplus-play"         % "7.0.1"                 % "test, it",
+    "com.github.tomakehurst"        %  "wiremock-jre8-standalone"   % "2.35.1"                % "test, it"
   )
 }

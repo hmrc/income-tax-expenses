@@ -26,7 +26,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, confidenceLevel}
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
@@ -67,42 +67,36 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
 
   val minimumConfidenceLevel: Int = ConfidenceLevel.L250.level
 
-  def sessionId(implicit request: Request[_], hc: HeaderCarrier): Option[String] = {
-    lazy val key = "sessionId"
-    if (hc.sessionId.isDefined) {
-      hc.sessionId.map(_.value)
-    } else if (request.headers.get(key).isDefined) {
-      request.headers.get(key)
-    } else {
-      None
-    }
-  }
 
-  private[predicates] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
-                                                     (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
+  private[predicates] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)(implicit
+                                                                                                                request: Request[A],
+                                                                                                                hc: HeaderCarrier
+  ): Future[Result] =
     authorised().retrieve(allEnrolments and confidenceLevel) {
       case enrolments ~ userConfidence if userConfidence.level >= minimumConfidenceLevel =>
-        val optionalMtdItId: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.Individual, EnrolmentIdentifiers.individualId, enrolments)
-        val optionalNino: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.nino, EnrolmentIdentifiers.nino, enrolments)
+        val optionalMtdItId: Option[String] =
+          enrolmentGetIdentifierValue(EnrolmentKeys.Individual, EnrolmentIdentifiers.individualId, enrolments)
+        val optionalNino: Option[String] =
+          enrolmentGetIdentifierValue(EnrolmentKeys.nino, EnrolmentIdentifiers.nino, enrolments)
 
         (optionalMtdItId, optionalNino) match {
           case (Some(authMTDITID), Some(_)) =>
-            sessionIdFrom(request, hc) match {
-              case Some(sessionId) =>
-                enrolments.enrolments.collectFirst {
-                  case Enrolment(EnrolmentKeys.Individual, enrolmentIdentifiers, _, _)
-                    if enrolmentIdentifiers.exists(identifier => identifier.key == EnrolmentIdentifiers.individualId && identifier.value == requestMtdItId) =>
-                    block(User(requestMtdItId, None, sessionId))
-                } getOrElse {
-                  logger.info(s"[AuthorisedAction][individualAuthentication] Non-agent with an invalid MTDITID. " +
-                    s"MTDITID in auth matches MTDITID in request: ${authMTDITID == requestMtdItId}")
-                  unauthorized
-                }
-              case None =>
-                logger.info(s"[AuthorisedAction][individualAuthentication] - No session id in request")
-                unauthorized
+            enrolments.enrolments.collectFirst {
+              case Enrolment(EnrolmentKeys.Individual, enrolmentIdentifiers, _, _)
+                if enrolmentIdentifiers.exists(identifier =>
+                  identifier.key == EnrolmentIdentifiers.individualId && identifier.value == requestMtdItId
+                ) =>
+                block(User(requestMtdItId, None))
+            } getOrElse {
+              logger.info(
+                s"[AuthorisedAction][individualAuthentication] Non-agent with an invalid MTDITID. " +
+                  s"MTDITID in auth matches MTDITID in request: ${authMTDITID == requestMtdItId}"
+              )
+              unauthorized
             }
-
+          case (_, None) =>
+            logger.info(s"[AuthorisedAction][individualAuthentication] - User has no nino.")
+            unauthorized
           case (None, _) =>
             logger.info(s"[AuthorisedAction][individualAuthentication] - User has no MTD IT enrolment.")
             unauthorized
@@ -111,7 +105,6 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
         logger.info("[AuthorisedAction][individualAuthentication] User has confidence level below 250.")
         unauthorized
     }
-  }
 
   private[predicates] def agentAuthPredicate(mtdId: String): Predicate =
     Enrolment(EnrolmentKeys.Individual)
@@ -156,15 +149,10 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
 
   private def populateAgent[A](block: User[A] => Future[Result],
                                mtdItId: String,
-                               enrolments: Enrolments)(implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
+                               enrolments: Enrolments)(implicit request: Request[A]): Future[Result] = {
     enrolmentGetIdentifierValue(EnrolmentKeys.Agent, EnrolmentIdentifiers.agentReference, enrolments) match {
       case Some(arn) =>
-        sessionIdFrom(request, hc).fold {
-          logger.info(s"[AuthorisedAction][agentAuthentication] - No session id in request.")
-          unauthorized
-        } { sessionId =>
-          block(User(mtdItId, Some(arn), sessionId))
-        }
+        block(User(mtdItId, Some(arn)))
       case None =>
         logger.info("[AuthorisedAction][agentAuthentication] Agent with no HMRC-AS-AGENT enrolment.")
         unauthorized
@@ -178,11 +166,5 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
       case EnrolmentIdentifier(`checkedIdentifier`, identifierValue) => identifierValue
     }
   }.flatten
-
-  private def sessionIdFrom(request: Request[_], hc: HeaderCarrier): Option[String] = hc.sessionId match {
-    case Some(sessionId) => Some(sessionId.value)
-    case _ => request.headers.get(SessionKeys.sessionId)
-
-  }
 
 }
