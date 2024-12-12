@@ -9,11 +9,11 @@ You will need to have the following:
 
 The service manager profile for this service is:
 
-    sm --start INCOME_TAX_EXPENSES
+    sm2 --start INCOME_TAX_EXPENSES
 Run the following command to start the remaining services locally:
 
     sudo mongod (If not already running)
-    sm --start INCOME_TAX_SUBMISSION_ALL -r
+    sm2 --start INCOME_TAX_SUBMISSION_ALL -r
 
 This service runs on port: `localhost:9318`
 

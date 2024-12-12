@@ -19,7 +19,7 @@ package utils
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.SystemMaterializer
 import com.codahale.metrics.SharedMetricRegistries
-import common.{EnrolmentIdentifiers, EnrolmentKeys}
+import common.{DelegatedAuthRules, EnrolmentIdentifiers, EnrolmentKeys}
 import config.{AppConfig, MockAppConfig}
 import controllers.predicates.AuthorisedAction
 import org.scalamock.scalatest.MockFactory
@@ -55,14 +55,13 @@ trait TestUtils extends AnyWordSpec with Matchers with MockFactory with BeforeAn
   val fakeRequestWithMtditid: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSession("MTDITID" -> "1234567890")
   implicit val emptyHeaderCarrier: HeaderCarrier = HeaderCarrier()
 
-  val mockAppConfig: AppConfig = new MockAppConfig
+  lazy val mockAppConfig: AppConfig = new MockAppConfig
   implicit val mockControllerComponents: ControllerComponents = Helpers.stubControllerComponents()
   implicit val mockExecutionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit val mockAuthConnector: AuthConnector = mock[AuthConnector]
   implicit val mockAuthService: AuthService = new AuthService(mockAuthConnector)
   val defaultActionBuilder: DefaultActionBuilder = DefaultActionBuilder(mockControllerComponents.parsers.default)
-  val authorisedAction = new AuthorisedAction()(mockAuthConnector, defaultActionBuilder, mockControllerComponents)
-
+  val authorisedAction = new AuthorisedAction()(mockAuthConnector, defaultActionBuilder, mockAppConfig, mockControllerComponents)
 
   def status(awaitable: Future[Result]): Int = await(awaitable).header.status
 
@@ -94,14 +93,39 @@ trait TestUtils extends AnyWordSpec with Matchers with MockFactory with BeforeAn
 
   //noinspection ScalaStyle
   def mockAuthAsAgent(enrolments: Enrolments = agentEnrolments) = {
-
     (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
       .expects(*, Retrievals.affinityGroup, *, *)
       .returning(Future.successful(Some(AffinityGroup.Agent)))
 
     (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, Retrievals.allEnrolments, *, *)
+      .expects(Enrolment(EnrolmentKeys.Individual)
+        .withIdentifier(EnrolmentIdentifiers.individualId, "1234567890")
+        .withDelegatedAuthRule(DelegatedAuthRules.agentDelegatedAuthRule), *, *, *)
       .returning(Future.successful(enrolments))
+  }
+
+  //noinspection ScalaStyle
+  def mockAuthAsSupportingAgent(enrolments: Enrolments = agentEnrolments) = {
+    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(*, Retrievals.affinityGroup, *, *)
+      .returning(Future.successful(Some(AffinityGroup.Agent)))
+      .once()
+
+    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(Enrolment(EnrolmentKeys.Individual)
+        .withIdentifier(EnrolmentIdentifiers.individualId, "1234567890")
+        .withDelegatedAuthRule(DelegatedAuthRules.agentDelegatedAuthRule), *, *, *)
+      .returning(Future.failed(InsufficientEnrolments()))
+      .once()
+
+    (() => mockAppConfig.emaSupportingAgentsEnabled).expects().returning(true).once()
+
+    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(Enrolment(EnrolmentKeys.SupportingAgent)
+        .withIdentifier(EnrolmentIdentifiers.individualId, "1234567890")
+        .withDelegatedAuthRule(DelegatedAuthRules.supportingAgentDelegatedAuthRule), *, *, *)
+      .returning(Future.successful(enrolments))
+      .once()
   }
 
   //noinspection ScalaStyle
