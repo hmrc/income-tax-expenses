@@ -546,5 +546,17 @@ class AuthorisedActionSpec extends TestUtils {
       }
     }
 
+    "return ISE" when {
+
+      "the authorisation service returns any other type of unexpected exception" in {
+
+        mockAuthReturnException(new Exception("bang"))
+
+        val result = authorisedAction.async(block)
+
+        status(result(fakeRequest)) mustBe INTERNAL_SERVER_ERROR
+      }
+    }
+
   }
 }
