@@ -215,18 +215,18 @@ Customer data is provided by the user. At the end of the tax year, users can vie
 ## Ninos with stub data for employment
 
 ### In-Year
-| Nino | Employment data | Source |
-| --- | --- | --- |
-| AA123459A | Single employment - Employment details and expenses | HMRC-Held |
-| AA133742A | Single employment - Employment details, benefits and expenses | HMRC-Held |
-| BB444444A | Multiple employments - Employment details, benefits and expenses| HMRC-Held |
+| Nino      | Employment data                                                  | Source    |
+|-----------|------------------------------------------------------------------|-----------|
+| AA123459A | Single employment - Employment details and expenses              | HMRC-Held |
+| AA133742A | Single employment - Employment details, benefits and expenses    | HMRC-Held |
+| BB444444A | Multiple employments - Employment details, benefits and expenses | HMRC-Held |
 
 ### End of Year
-| Nino | Employment data | Source
-| --- | --- | --- |
-| AA123459A | Single employment - Employment details and expenses | HMRC-Held, Customer |
+| Nino      | Employment data                                                  | Source              |
+|-----------|------------------------------------------------------------------|---------------------|
+| AA123459A | Single employment - Employment details and expenses              | HMRC-Held, Customer |
 | BB444444A | Multiple employments - Employment details, benefits and expenses | HMRC-Held, Customer |
-| AA333444A | User with only expenses data | HMRC-Held |
+| AA333444A | User with only expenses data                                     | HMRC-Held           |
 
 ### License
 
