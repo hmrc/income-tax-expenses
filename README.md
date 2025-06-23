@@ -17,6 +17,17 @@ Run the following command to start the remaining services locally:
 
 This service runs on port: `localhost:9318`
 
+To test the branch you're working on locally. You will need to run `sm2 --stop INCOME_TAX_EXPENSES` followed by
+`./run.sh`
+
+### Running Tests
+
+- Run Unit Tests:  `sbt test`
+- Run Integration Tests: `sbt it/test`
+- Run Unit and Integration Tests: `sbt test it/test`
+- Run Unit and Integration Tests with coverage report: `./check.sh`<br/>
+  which runs `sbt clean coverage test it/test coverageReport dependencyUpdates`
+
 ### Expenses endpoints:
 
 - **GET    /income-tax/nino/:nino/sources** (Gets either hmrc expenses or customer expenses data)
