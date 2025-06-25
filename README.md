@@ -7,13 +7,15 @@ This is where we make API calls from users viewing and making changes to the emp
 You will need to have the following:
 - Installed/configured [service manager](https://github.com/hmrc/service-manager).
 
+This can be found in the [developer handbook](https://docs.tax.service.gov.uk/mdtp-handbook/documentation/developer-set-up/)
+
 The service manager profile for this service is:
 
     sm2 --start INCOME_TAX_EXPENSES
 Run the following command to start the remaining services locally:
 
     sudo mongod (If not already running)
-    sm2 --start INCOME_TAX_SUBMISSION_ALL -r
+    sm2 --start INCOME_TAX_SUBMISSION_ALL
 
 This service runs on port: `localhost:9318`
 
@@ -23,10 +25,10 @@ To test the branch you're working on locally. You will need to run `sm2 --stop I
 ### Running Tests
 
 - Run Unit Tests:  `sbt test`
-- Run Integration Tests: `sbt it/test`
-- Run Unit and Integration Tests: `sbt test it/test`
+- Run Integration Tests: `sbt it:test`
+- Run Unit and Integration Tests: `sbt test it:test`
 - Run Unit and Integration Tests with coverage report: `./check.sh`<br/>
-  which runs `sbt clean coverage test it/test coverageReport dependencyUpdates`
+  which runs `sbt clean coverage test it:test coverageReport dependencyUpdates`
 
 ### Expenses endpoints:
 
@@ -222,6 +224,48 @@ Customer data is provided by the user. At the end of the tax year, users can vie
 ```
 
 </details>
+
+
+### Local
+
+#### Individual
+* Login via: [http://localhost:9949/auth-login-stub/gg-sign-in](http://localhost:9949/auth-login-stub/gg-sign-in)
+* Entry page: [http://localhost:9302/update-and-submit-income-tax-return/2025/start](http://localhost:9302/update-and-submit-income-tax-return/2025/start)
+
+| Enrolment Key | Identifier Name | Identifier Value |
+|---------------|-----------------|------------------|
+| HMRC-MTD-IT   | MTDITID         | 1234567890       |
+
+
+### Agent
+* Login via: [http://localhost:9949/auth-login-stub/gg-sign-in](http://localhost:9949/auth-login-stub/gg-sign-in)
+* Entry page : [http://localhost:9302/update-and-submit-income-tax-return/test-only/2024/additional-parameters?ClientNino=AA123459A&ClientMTDID=1234567890](http://localhost:9302/update-and-submit-income-tax-return/test-only/2024/additional-parameters?ClientNino=AA123459A&ClientMTDID=1234567890)
+
+| Enrolment Key  | Identifier Name      | Identifier Value	 |
+|----------------|----------------------|-------------------|
+| HMRC-MTD-IT    | MTDITID              | 1234567890        |
+| HMRC-AS-AGENT  | AgentReferenceNumber | XARN1234567       |
+
+### Staging
+
+*Requires HMRC VPN*
+
+#### Individual
+* Login via: [https://www.staging.tax.service.gov.uk/auth-login-stub/gg-sign-in](https://www.staging.tax.service.gov.uk/auth-login-stub/gg-sign-in)
+* Entry page : [https://www.staging.tax.service.gov.uk/update-and-submit-income-tax-return/2026/start](https://www.staging.tax.service.gov.uk/update-and-submit-income-tax-return/2026/start)
+
+| Enrolment Key | Identifier Name | Identifier Value |
+|---------------|-----------------|------------------|
+| HMRC-MTD-IT   | MTDITID         | 1234567890       |
+
+#### Agent
+* Login via: [https://www.staging.tax.service.gov.uk/auth-login-stub/gg-sign-in](https://www.staging.tax.service.gov.uk/auth-login-stub/gg-sign-in)
+* Entry page : [https://www.staging.tax.service.gov.uk/update-and-submit-income-tax-return/test-only/2026/additional-parameters?ClientNino=AA123459A&ClientMTDID=1234567890](https://www.staging.tax.service.gov.uk/update-and-submit-income-tax-return/test-only/2026/additional-parameters?ClientNino=AA123459A&ClientMTDID=1234567890)
+
+| Enrolment Key  | Identifier Name      | Identifier Value	 |
+|----------------|----------------------|-------------------|
+| HMRC-MTD-IT    | MTDITID              | 1234567890        |
+| HMRC-AS-AGENT  | AgentReferenceNumber | XARN1234567       |
 
 ## Ninos with stub data for employment
 
