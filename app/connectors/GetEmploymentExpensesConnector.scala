@@ -18,7 +18,8 @@ package connectors
 
 import config.AppConfig
 import connectors.httpParsers.GetEmploymentExpensesHttpParser.{GetEmploymentExpensesHttpReads, GetEmploymentExpensesResponse}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.DESTaxYearHelper.desTaxYearConverter
 import utils.TaxYearUtils.{isYearAfter2324, toTaxYearParam}
 
@@ -26,7 +27,7 @@ import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class GetEmploymentExpensesConnector @Inject()(val http: HttpClient, val appConfig: AppConfig)
+class GetEmploymentExpensesConnector @Inject()(val http: HttpClientV2, val appConfig: AppConfig)
                                               (implicit ec: ExecutionContext) extends IFConnector {
 
   def getEmploymentExpenses(nino: String, taxYear: Int, view: String)(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
@@ -37,7 +38,7 @@ class GetEmploymentExpensesConnector @Inject()(val http: HttpClient, val appConf
     }
 
     def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[GetEmploymentExpensesResponse] = {
-      http.GET[GetEmploymentExpensesResponse](url)
+      http.get(url"$url").execute[GetEmploymentExpensesResponse]
     }
 
     integrationFrameworkCall(integrationFrameworkHeaderCarrier(url, apiVersion))

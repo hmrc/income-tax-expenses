@@ -18,14 +18,15 @@ package connectors
 
 import config.AppConfig
 import connectors.httpParsers.DeleteOverrideEmploymentExpensesHttpParser.{DeleteOverrideEmploymentExpensesHttpReads, DeleteOverrideEmploymentExpensesResponse}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.TaxYearUtils.toTaxYearParam
 
 import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class DeleteOverrideEmploymentExpensesIFConnector @Inject()(val http: HttpClient,
+class DeleteOverrideEmploymentExpensesIFConnector @Inject()(val http: HttpClientV2,
                                                             val appConfig: AppConfig)(implicit val ec: ExecutionContext) extends IFConnector {
 
   def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
@@ -33,7 +34,9 @@ class DeleteOverrideEmploymentExpensesIFConnector @Inject()(val http: HttpClient
     val uri: URL = new URL(baseUrl + s"/income-tax/expenses/employments/${toTaxYearParam(taxYear)}/$nino")
 
     def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
-      http.DELETE[DeleteOverrideEmploymentExpensesResponse](uri)
+      http
+        .delete(url"$uri")
+        .execute[DeleteOverrideEmploymentExpensesResponse]
     }
 
     integrationFrameworkCall(integrationFrameworkHeaderCarrier(uri, DELETE_OVERRIDE_EXPENSES_AFTER_23_24))

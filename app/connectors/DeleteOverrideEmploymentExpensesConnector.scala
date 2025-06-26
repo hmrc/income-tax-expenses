@@ -18,13 +18,14 @@ package connectors
 
 import config.AppConfig
 import connectors.httpParsers.DeleteOverrideEmploymentExpensesHttpParser.{DeleteOverrideEmploymentExpensesHttpReads, DeleteOverrideEmploymentExpensesResponse}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.DESTaxYearHelper.desTaxYearConverter
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class DeleteOverrideEmploymentExpensesConnector @Inject()(val http: HttpClient,
+class DeleteOverrideEmploymentExpensesConnector @Inject()(val http: HttpClientV2,
                                                           val appConfig: AppConfig)(implicit val ec: ExecutionContext) extends DesConnector {
 
   def deleteOverrideEmploymentExpenses(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
@@ -32,7 +33,9 @@ class DeleteOverrideEmploymentExpensesConnector @Inject()(val http: HttpClient,
     val incomeSourceUri: String = baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}"
 
     def desCall(implicit hc: HeaderCarrier): Future[DeleteOverrideEmploymentExpensesResponse] = {
-      http.DELETE[DeleteOverrideEmploymentExpensesResponse](incomeSourceUri)
+      http
+        .delete(url"$incomeSourceUri")
+        .execute[DeleteOverrideEmploymentExpensesResponse]
     }
 
     desCall(desHeaderCarrier(incomeSourceUri))

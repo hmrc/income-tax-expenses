@@ -24,7 +24,8 @@ import models.{DesErrorBodyModel, DesErrorModel, GetEmploymentExpensesModel}
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, HttpClient, SessionId}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, SessionId}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.DESTaxYearHelper.desTaxYearConverter
 
@@ -32,7 +33,7 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
 
   private lazy val connector: GetEmploymentExpensesConnector = app.injector.instanceOf[GetEmploymentExpensesConnector]
 
-  private lazy val httpClient: HttpClient = app.injector.instanceOf[HttpClient]
+  private lazy val httpClient: HttpClientV2 = app.injector.instanceOf[HttpClientV2]
   private val nino: String = "123456789"
   private val taxYear: Int = 2022
   private val taxYear2324: Int = 2024

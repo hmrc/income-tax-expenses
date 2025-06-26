@@ -19,15 +19,16 @@ package connectors
 import config.AppConfig
 import connectors.httpParsers.CreateOrAmendEmploymentExpensesHttpParser.{CreateOrAmendEmploymentExpenseResponse, CreateOrAmendEmploymentExpensesHttpReads}
 import models.EmploymentExpensesRequestModel
-import models.EmploymentExpensesRequestModel._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.DESTaxYearHelper.desTaxYearConverter
 
 import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreateOrAmendEmploymentExpensesConnector @Inject()(val http: HttpClient,
+class CreateOrAmendEmploymentExpensesConnector @Inject()(val http: HttpClientV2,
                                                          val appConfig: AppConfig)(implicit ec: ExecutionContext) extends IFConnector {
 
   def createOrAmendEmploymentExpenses(nino: String, taxYear: Int, expense: EmploymentExpensesRequestModel)
@@ -35,7 +36,10 @@ class CreateOrAmendEmploymentExpensesConnector @Inject()(val http: HttpClient,
     val createExpensesUri: URL = new URL(baseUrl + s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}")
 
     def integrationFrameworkCall(implicit hc: HeaderCarrier): Future[CreateOrAmendEmploymentExpenseResponse] = {
-      http.PUT[EmploymentExpensesRequestModel, CreateOrAmendEmploymentExpenseResponse](createExpensesUri, expense)
+      http
+        .put(url"$createExpensesUri")
+        .withBody(Json.toJson(expense))
+        .execute[CreateOrAmendEmploymentExpenseResponse]
     }
 
     integrationFrameworkCall(integrationFrameworkHeaderCarrier(createExpensesUri, CREATE_UPDATE_EXPENSES_BEFORE_23_24))
