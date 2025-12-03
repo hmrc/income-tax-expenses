@@ -116,7 +116,7 @@ class GetEmploymentExpensesConnectorSpec extends WiremockSpec {
         stubGetWithResponseBody(s"/income-tax/expenses/employments/$nino/${desTaxYearConverter(taxYear)}\\?view=$view", OK, expectedResponseBody)
 
         implicit val hc: HeaderCarrier = HeaderCarrier()
-        val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc)).right.get
+        val result = await(connector.getEmploymentExpenses(nino, taxYear, view)(hc)).getOrElse(null)
 
         result mustBe expectedResult
       }
