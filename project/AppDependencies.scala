@@ -29,7 +29,7 @@ object AppDependencies {
     "uk.gov.hmrc"                   %% "bootstrap-test-play-30"     % bootstrapPlayVersion    % Test,
     "org.scalatest"                 %% "scalatest"                  % "3.2.19"                % Test,
     "org.playframework"             %% "play-test"                  % current                 % Test,
-    "org.scalamock"                 %% "scalamock"                  % "7.5.2"                 % Test,
+    "org.scalamock"                 %% "scalamock"                  % "7.5.5"                 % Test,
     "com.vladsch.flexmark"          %  "flexmark-all"               % "0.64.8"                % Test,
     "org.scalatestplus.play"        %% "scalatestplus-play"         % "7.0.2"                 % Test,
     "com.github.tomakehurst"        %  "wiremock-jre8-standalone"   % "3.0.1"                 % Test
